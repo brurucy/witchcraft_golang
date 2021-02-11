@@ -1,0 +1,3 @@
+* Hello.
+
+This is an experiment on translating the python library witchcraft to go.
