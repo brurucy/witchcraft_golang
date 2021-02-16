@@ -37,9 +37,15 @@ func insortKeyValue(a []KeyValue, value int) []KeyValue {
 
 func insortInt(a []int, value int) []int {
 
+	//idx := sort.Search(len(a), func(i int) bool { return a[i] >= value })
 	idx := sort.Search(len(a), func(i int) bool { return a[i] >= value })
+	a = append(a, value)
+	copy(a[idx+1:], a[idx:])
+	a[idx] = value
 
-	return insertInt(a, idx, value)
+	return a
+
+	//return insertInt(a, idx, value)
 
 }
 

@@ -50,30 +50,6 @@ func main() {
 
 	start = time.Now()
 
-	for i := 1; i < n; i++ {
-
-		src.BinarySearchInt(tlist.Data, i)
-		//InterpolatedBinarySearchInt(tlist.Data, i)
-	}
-
-	elapsed = time.Since(start)
-
-	fmt.Println("Sorted List Elapsed find slice: ", elapsed)
-
-	start = time.Now()
-
-	for i := 1; i < n; i++ {
-
-		//	tlist.Index(i)
-
-	}
-
-	elapsed = time.Since(start)
-
-	fmt.Println("Tlist Elapsed index: ", elapsed)
-
-	start = time.Now()
-
 	mapp := make(map[int]bool)
 
 	for i := 1; i < n; i++ {

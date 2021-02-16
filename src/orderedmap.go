@@ -1,8 +1,10 @@
 package src
 
 import (
+	//"fmt"
 	"math"
 	"math/rand"
+	"sort"
 )
 
 type KeyValue struct {
@@ -10,75 +12,153 @@ type KeyValue struct {
 	value string
 }
 
-type MinMaxList struct {
-	Indexes []KeyValue
-	Height  int
+type Bucket struct {
+	Indexes []int
 	Min     int
 	Max     int
 }
 
-type TeleportList struct {
-	Sublists      [30]MinMaxList
-	Data          []int
-	CurrentHeight int
-	Length        int
+type ListOfBuckets struct {
+	Buckets []Bucket
+	Height  int
 }
 
-func NewTeleportList() TeleportList {
-	teleportList := TeleportList{}
-	teleportList.CurrentHeight = -1
+type SplitList struct {
+	ListOfBucketLists []ListOfBuckets
+	CurrentHeight     int
+	Length            int
+	Load              int
+}
+
+func (l *ListOfBuckets) Balance(i int, load int) {
+
+	B := Bucket{}
+
+	candidate_bucket := &l.Buckets[i]
+
+	half_load := load / 2
+
+	new_bucket_indexes := make([]int, half_load)
+
+	for i := half_load - 1; i >= 0; i-- {
+
+		temp := candidate_bucket.Indexes[len((*candidate_bucket).Indexes)-1]
+
+		(*candidate_bucket).Indexes = (*candidate_bucket).Indexes[0 : len((*candidate_bucket).Indexes)-1]
+
+		new_bucket_indexes[i] = temp
+
+	}
+
+	B.Indexes = new_bucket_indexes
+	B.Min = B.Indexes[0]
+	B.Max = (*candidate_bucket).Max
+	(*candidate_bucket).Max = (*candidate_bucket).Indexes[len((*candidate_bucket).Indexes)-1]
+
+	idx := sort.Search(len(l.Buckets), func(i int) bool { return l.Buckets[i].Max >= B.Max })
+
+	l.Buckets = append(l.Buckets[0:idx], append([]Bucket{B}, l.Buckets[idx:]...)...)
+
+}
+
+func NewSplitList() SplitList {
+	splitList := SplitList{}
+	splitList.CurrentHeight = -1
 	for i := 0; i < 30; i++ {
 
-		newMMList := MinMaxList{}
-		newMMList.Max = math.MinInt64
-		newMMList.Min = math.MaxInt64
-		newMMList.Height = -1
+		newListOfBuckets := ListOfBuckets{}
+		newListOfBuckets.Height = -1
 
-		teleportList.Sublists[i] = newMMList
+		splitList.ListOfBucketLists[i] = newListOfBuckets
 	}
-	return teleportList
+	return splitList
 }
 
-func (t *TeleportList) Add(value int) {
+func (s *SplitList) Add(key int) {
 	candidateHeight := int(math.Abs(math.Log2(rand.Float64())))
 
-	if t.Sublists[candidateHeight].Height == -1 {
+	if candidateHeight > s.CurrentHeight {
 
-		t.Sublists[candidateHeight].Height = candidateHeight
+		heightDiff := candidateHeight - s.CurrentHeight
+
+		for i := 0; i < heightDiff; i++ {
+
+			newListOfBuckets := ListOfBuckets{}
+			newBucket := Bucket{}
+			newBucket.Max = math.MinInt64
+			newBucket.Min = math.MaxInt64
+			newListOfBuckets.Buckets = append(newListOfBuckets.Buckets, newBucket)
+
+			s.ListOfBucketLists = append(s.ListOfBucketLists, newListOfBuckets)
+
+		}
+
+		s.CurrentHeight = candidateHeight
 
 	}
 
-	candidateHeightSublist := &t.Sublists[candidateHeight]
+	candidateHeightListOfBuckets := s.ListOfBucketLists[candidateHeight]
 
-	candidateHeightSublist.Indexes = insortKeyValue(candidateHeightSublist.Indexes, value)
+	candidateHeightListOfBucketsBuckets := candidateHeightListOfBuckets.Buckets
 
-	t.Length += 1
-	if candidateHeightSublist.Max < value {
-		candidateHeightSublist.Max = value
+	candidateBucketIndex := sort.Search(len(candidateHeightListOfBucketsBuckets), func(i int) bool { return candidateHeightListOfBucketsBuckets[i].Max >= key })
+
+	if candidateBucketIndex == len(candidateHeightListOfBucketsBuckets) {
+
+		candidateBucket := candidateHeightListOfBucketsBuckets[len(candidateHeightListOfBucketsBuckets)-1]
+		candidateBucketBucketIndex := sort.Search(len(candidateBucket.Indexes), func(i int) bool { return candidateBucket.Indexes[i] >= key })
+
+		candidateBucket.Indexes = append(candidateBucket.Indexes[0:candidateBucketBucketIndex], append([]int{key}, candidateBucket.Indexes[candidateBucketBucketIndex:]...)...)
+
+		candidateBucket.Max = candidateBucket.Indexes[len(candidateBucket.Indexes)-1]
+		candidateBucket.Min = candidateBucket.Indexes[0]
+
+		s.ListOfBucketLists[candidateHeight].Buckets[len(candidateHeightListOfBucketsBuckets)-1] = candidateBucket
+
+		if len(candidateBucket.Indexes) == s.Load-1 {
+
+			s.ListOfBucketLists[candidateHeight].Balance(len(candidateHeightListOfBucketsBuckets)-1, s.Load)
+
+		}
+
+	} else {
+
+		candidateBucket := candidateHeightListOfBucketsBuckets[candidateBucketIndex]
+		candidateBucketBucketIndex := sort.Search(len(candidateBucket.Indexes), func(i int) bool { return candidateBucket.Indexes[i] >= key })
+
+		candidateBucket.Indexes = append(candidateBucket.Indexes[0:candidateBucketBucketIndex], append([]int{key}, candidateBucket.Indexes[candidateBucketBucketIndex:]...)...)
+
+		candidateBucket.Max = candidateBucket.Indexes[len(candidateBucket.Indexes)-1]
+		candidateBucket.Min = candidateBucket.Indexes[0]
+
+		s.ListOfBucketLists[candidateHeight].Buckets[candidateBucketIndex] = candidateBucket
+
+		if len(candidateBucket.Indexes) == s.Load-1 {
+
+			s.ListOfBucketLists[candidateHeight].Balance(candidateBucketIndex, s.Load)
+
+		}
+
 	}
-	if candidateHeightSublist.Min > value {
-		candidateHeightSublist.Min = value
-	}
-
-	//sort.Sort(t.SSublists)
-	//	t.Data = insortInt(t.Data, value)
 
 }
 
-func (t TeleportList) Find(value int) bool {
+func (s *SplitList) Find(key int) bool {
 
-	if last := len(t.Sublists) - 1; last >= 0 {
+	for i := range s.ListOfBucketLists {
 
-		for i := last; i >= 0; i-- {
+		lb := s.ListOfBucketLists[i].Buckets
+		len_lb := len(s.ListOfBucketLists[i].Buckets)
 
-			if t.Sublists[i].Min <= value {
+		if len_lb != 0 {
 
-				if t.Sublists[i].Max >= value {
+			if !(key > lb[len_lb-1].Max || key < lb[0].Min) {
 
-					bsearch := BinarySearchKeyValue(t.Sublists[i].Indexes, value)
-					//bsearch := InterpolatedBinarySearchKeyValue(t.Sublists[i].Indexes, value)
+				i = sort.Search(len_lb, func(i int) bool { return lb[i].Max >= key })
 
-					if bsearch == true {
+				if (i != len_lb) && (!(lb[i].Min > key)) {
+
+					if BinarySearchInt(lb[i].Indexes, key) {
 
 						return true
 
@@ -89,14 +169,9 @@ func (t TeleportList) Find(value int) bool {
 			}
 
 		}
+
 	}
 
 	return false
-
-}
-
-func (t TeleportList) Index(value int) bool {
-
-	return t.Find(t.Data[value-1])
 
 }
