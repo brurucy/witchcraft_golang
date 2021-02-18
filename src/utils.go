@@ -66,7 +66,7 @@ func BinarySearchKeyValue(a []KeyValue, value int) bool {
 
 func BinarySearchInt(a []int, value int) bool {
 
-	idx := sort.Search(len(a), func(i int) bool { return a[i] >= value })
+	idx := sort.Search(len(a), func(i int) bool { return (a)[i] >= value })
 
 	if idx == len(a) {
 

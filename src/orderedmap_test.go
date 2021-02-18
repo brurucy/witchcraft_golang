@@ -25,6 +25,30 @@ func TestSplit(t *testing.T) {
 	fmt.Println(lob.Buckets, "at A")
 }
 
+func TestCopy(t *testing.T) {
+
+	bla := make([]int, 10)
+
+	for i := 0; i < 10; i++ {
+
+		bla[i] = i
+
+	}
+
+	ble := make([]int, 10)
+
+	fmt.Println("bla", bla)
+
+	copy_result := copy(ble[0:5], bla[5:len(bla)])
+
+	fmt.Println("bla", bla)
+
+	fmt.Println("ble", ble)
+
+	fmt.Println("Copy Result", copy_result)
+
+}
+
 func TestAdd(t *testing.T) {
 
 	splitList := SplitList{}
@@ -36,11 +60,13 @@ func TestAdd(t *testing.T) {
 
 	var bla []int
 
-	n := 1_000
+	n := 10000000
 
 	for i := n; i >= 0; i-- {
 
-		bla = append(bla, rand.Intn(10_000_000))
+		bla = append(bla, rand.Intn(100_000_000))
+
+		//bla = append(bla, i)
 
 	}
 
@@ -74,15 +100,69 @@ func TestAdd(t *testing.T) {
 
 	}
 
+	/*
+
+		for i := 0; i < splitList.CurrentHeight; i++ {
+
+			for j := range splitList.ListOfBucketLists[i].Buckets {
+
+				fmt.Println("Length: ", len(splitList.ListOfBucketLists[i].Buckets[j].Indexes))
+
+			}
+
+			fmt.Println(splitList.ListOfBucketLists[i])
+		}
+	*/
+
 }
 
+type Element int
+
+// Implement the interface used in skiplist
+func (e Element) ExtractKey() float64 {
+	return float64(e)
+}
+func (e Element) String() string {
+	return fmt.Sprintf("%03d", e)
+}
+
+/*
+
+func TestSkipListAdd(t *testing.T) {
+
+	var bla []int
+
+	skipList := New()
+
+	n := 10_000_000
+
+	for i := n; i >= 0; i-- {
+
+		bla = append(bla, rand.Intn(100_000_000))
+
+	}
+
+	start := time.Now()
+
+	for i := n; i >= 0; i-- {
+
+		skipList.Insert(Element(bla[i]))
+
+	}
+
+	elapsed := time.Since(start)
+
+	fmt.Printf("Time to insert %d : %d seconds \n", n, elapsed/1_000_000_000)
+
+}
+*/
 func TestFind(t *testing.T) {
 
 	splitList := SplitList{}
 	splitList.CurrentHeight = -1
 	splitList.Load = 1000
 
-	n := 1_000
+	n := 10_000_000
 
 	for i := 0; i < n; i++ {
 
@@ -140,15 +220,18 @@ func TestInsort(t *testing.T) {
 
 }
 
-func BenchmarkAdd(b *testing.B) {
+/*
+func BenchmarkSkipListAdd(b *testing.B) {
 
 	//tlist := NewTeleportList()
 
 	var bla []int
 
-	splitList := SplitList{}
-	splitList.CurrentHeight = -1
-	splitList.Load = 2000
+	//splitList := SplitList{}
+	//splitList.CurrentHeight = -1
+	//splitList.Load = 2000
+
+	skipList := New()
 
 	n := 10_000_000
 
@@ -163,7 +246,97 @@ func BenchmarkAdd(b *testing.B) {
 
 	for i := 1; i < b.N; i++ {
 
+		skipList.Insert(Element(bla[i]))
+
+	}
+
+}
+*/
+func BenchmarkSplitListAdd(b *testing.B) {
+
+	var bla []int
+
+	splitList := SplitList{}
+	splitList.CurrentHeight = -1
+	splitList.Load = 2000
+
+	n := 20_000_000
+
+	for i := 1; i < n; i++ {
+
+		bla = append(bla, rand.Intn(100_000_000))
+	}
+
+	b.ResetTimer()
+
+	for i := 1; i < b.N; i++ {
+
 		splitList.Add(bla[i])
+
+	}
+
+}
+
+/*
+func BenchmarkSkipListFind(b *testing.B) {
+
+	var bla []int
+
+	skipList := New()
+
+	n := 10_000_000
+
+	for i := 1; i < n; i++ {
+
+		bla = append(bla, rand.Intn(20_000_000))
+	}
+
+	for i := 1; i < n; i++ {
+
+		skipList.Insert(Element(bla[i-1]))
+
+	}
+
+	b.ResetTimer()
+
+	for i := 1; i < n; i++ {
+
+		skipList.Find(Element(bla[i-1]))
+
+	}
+
+}
+*/
+func BenchmarkSplitListFind(b *testing.B) {
+
+	var bla []int
+
+	splitList := SplitList{}
+	splitList.CurrentHeight = -1
+	splitList.Load = 2000
+
+	//skipList := New()
+
+	n := 20_000_000
+
+	for i := 1; i < n; i++ {
+
+		bla = append(bla, rand.Intn(100_000_000))
+	}
+
+	//var a []int
+
+	for i := 1; i < n; i++ {
+
+		splitList.Add(bla[i-1])
+
+	}
+
+	b.ResetTimer()
+
+	for i := 1; i < b.N; i++ {
+
+		splitList.Find(bla[i-1])
 
 	}
 
