@@ -267,11 +267,50 @@ func BenchmarkSplitListAdd(b *testing.B) {
 		bla = append(bla, rand.Intn(100_000_000))
 	}
 
-	b.ResetTimer()
-
-	for i := 1; i < b.N; i++ {
+	for i := 1; i < (n / 2); i++ {
 
 		splitList.Add(bla[i])
+
+	}
+
+	b.ResetTimer()
+
+	for i := (n / 2); i < b.N; i++ {
+
+		splitList.Add(bla[i])
+
+	}
+
+}
+
+func BenchmarkSkipListAdd(b *testing.B) {
+
+	var bla []int
+
+	//splitList := SplitList{}
+	//splitList.CurrentHeight = -1
+	//splitList.Load = 2000
+
+	skipList := New()
+
+	n := 20_000_000
+
+	for i := 1; i < n; i++ {
+
+		bla = append(bla, rand.Intn(100_000_000))
+	}
+
+	for i := 1; i < (n / 2); i++ {
+
+		skipList.Insert(Element(bla[i]))
+
+	}
+
+	b.ResetTimer()
+
+	for i := (n / 2); i < b.N; i++ {
+
+		skipList.Insert(Element(bla[i]))
 
 	}
 
