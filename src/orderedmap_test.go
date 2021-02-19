@@ -316,7 +316,6 @@ func BenchmarkSkipListAdd(b *testing.B) {
 
 }
 
-/*
 func BenchmarkSkipListFind(b *testing.B) {
 
 	var bla []int
@@ -330,7 +329,7 @@ func BenchmarkSkipListFind(b *testing.B) {
 		bla = append(bla, rand.Intn(20_000_000))
 	}
 
-	for i := 1; i < n; i++ {
+	for i := 1; i < n/2; i++ {
 
 		skipList.Insert(Element(bla[i-1]))
 
@@ -338,14 +337,14 @@ func BenchmarkSkipListFind(b *testing.B) {
 
 	b.ResetTimer()
 
-	for i := 1; i < n; i++ {
+	for i := n / 2; i < n; i++ {
 
 		skipList.Find(Element(bla[i-1]))
 
 	}
 
 }
-*/
+
 func BenchmarkSplitListFind(b *testing.B) {
 
 	var bla []int
@@ -365,7 +364,7 @@ func BenchmarkSplitListFind(b *testing.B) {
 
 	//var a []int
 
-	for i := 1; i < n; i++ {
+	for i := 1; i < n/2; i++ {
 
 		splitList.Add(bla[i-1])
 
@@ -373,7 +372,7 @@ func BenchmarkSplitListFind(b *testing.B) {
 
 	b.ResetTimer()
 
-	for i := 1; i < b.N; i++ {
+	for i := n / 2; i < b.N; i++ {
 
 		splitList.Find(bla[i-1])
 
