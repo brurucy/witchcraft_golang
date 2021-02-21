@@ -197,7 +197,7 @@ func BenchmarkSplitListRandAdd(b *testing.B) {
 
 	splitList := NewSplitList(1024)
 
-	n := 2_000_000
+	n := 20_000_000
 
 	for i := 0; i < n; i++ {
 
@@ -226,7 +226,7 @@ func BenchmarkSplitListIncAdd(b *testing.B) {
 
 	splitList := NewSplitList(1024)
 
-	n := 2_000_000
+	n := 20_000_000
 
 	for i := 0; i < n; i++ {
 
@@ -257,7 +257,7 @@ func BenchmarkSplitListRandFind(b *testing.B) {
 
 	//skipList := New()
 
-	n := 2_000_000
+	n := 20_000_000
 
 	for i := 0; i < n; i++ {
 
@@ -290,7 +290,7 @@ func BenchmarkSplitListIncFind(b *testing.B) {
 
 	//skipList := New()
 
-	n := 2_000_000
+	n := 20_000_000
 
 	for i := 0; i < n; i++ {
 
@@ -335,7 +335,7 @@ func BenchmarkMauriceSkipListRandAdd(b *testing.B) {
 
 	skipList := mauriceSkipList.New()
 
-	n := 2_000_000
+	n := 20_000_000
 
 	for i := 0; i < n; i++ {
 
@@ -368,7 +368,7 @@ func BenchmarkMauriceSkipListIncAdd(b *testing.B) {
 
 	skipList := mauriceSkipList.New()
 
-	n := 2_000_000
+	n := 20_000_000
 
 	for i := 0; i < n; i++ {
 
@@ -397,7 +397,7 @@ func BenchmarkMauriceSkipListRandFind(b *testing.B) {
 
 	skipList := mauriceSkipList.New()
 
-	n := 2_000_000
+	n := 20_000_000
 
 	for i := 0; i < n; i++ {
 
@@ -426,7 +426,7 @@ func BenchmarkMauriceSkipListIncFind(b *testing.B) {
 
 	skipList := mauriceSkipList.New()
 
-	n := 2_000_000
+	n := 20_000_000
 
 	for i := 0; i < n; i++ {
 
@@ -459,7 +459,7 @@ func BenchmarkSeanSkipListRandAdd(b *testing.B) {
 
 	skipList := seanSkipList.New()
 
-	n := 2_000_000
+	n := 20_000_000
 
 	for i := 0; i < n; i++ {
 
@@ -488,7 +488,7 @@ func BenchmarkSeanSkipListIncAdd(b *testing.B) {
 
 	skipList := seanSkipList.New()
 
-	n := 2_000_000
+	n := 20_000_000
 
 	for i := 0; i < n; i++ {
 
@@ -517,7 +517,7 @@ func BenchmarkSeanSkipListRandFind(b *testing.B) {
 
 	skipList := seanSkipList.New()
 
-	n := 2_000_000
+	n := 20_000_000
 
 	for i := 0; i < n; i++ {
 
@@ -546,7 +546,7 @@ func BenchmarkSeanSkipListIncFind(b *testing.B) {
 
 	skipList := seanSkipList.New()
 
-	n := 2_000_000
+	n := 20_000_000
 
 	for i := 0; i < n; i++ {
 
@@ -579,9 +579,9 @@ func BenchmarkGBTreeSkipListRandAdd(b *testing.B) {
 
 	var bla []Int
 
-	bTree := btree.New(256)
+	bTree := btree.New(1024)
 
-	n := 2_000_000
+	n := 20_000_000
 
 	for i := 0; i < n; i++ {
 
@@ -608,9 +608,9 @@ func BenchmarkGBTreeSkipListIncAdd(b *testing.B) {
 
 	var bla []Int
 
-	bTree := btree.New(256)
+	bTree := btree.New(1024)
 
-	n := 2_000_000
+	n := 20_000_000
 
 	for i := 0; i < n; i++ {
 
@@ -637,9 +637,9 @@ func BenchmarkGBTreeSkipListRandFind(b *testing.B) {
 
 	var bla []Int
 
-	bTree := btree.New(256)
+	bTree := btree.New(1024)
 
-	n := 2_000_000
+	n := 20_000_000
 
 	for i := 0; i < n; i++ {
 
@@ -666,9 +666,9 @@ func BenchmarkGBTreeSkipListIncFind(b *testing.B) {
 
 	var bla []Int
 
-	bTree := btree.New(256)
+	bTree := btree.New(1024)
 
-	n := 2_000_000
+	n := 20_000_000
 
 	for i := 0; i < n; i++ {
 
