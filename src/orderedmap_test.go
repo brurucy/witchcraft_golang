@@ -2,13 +2,17 @@ package src
 
 import (
 	"fmt"
+	mauriceSkipList "github.com/MauriceGit/skiplist"
+	//chavezSkipList "github.com/mtchavez/skiplist"
+	//ryszardSkipList "github.com/ryszard/goskiplist/skiplist"
+	btree "github.com/google/btree"
+	seanSkipList "github.com/sean-public/fast-skiplist"
 	"math/rand"
-	"sort"
 	"testing"
 	"time"
 )
 
-func TestSplit(t *testing.T) {
+func TestBalance(t *testing.T) {
 
 	lob := &ListOfBuckets{Buckets: []Bucket{{Indexes: []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
 		Min: 1,
@@ -25,48 +29,53 @@ func TestSplit(t *testing.T) {
 	fmt.Println(lob.Buckets, "at A")
 }
 
-func TestCopy(t *testing.T) {
+func TestAddFindSmall(t *testing.T) {
 
-	bla := make([]int, 10)
+	splitList := NewSplitList(3)
 
-	for i := 0; i < 10; i++ {
+	var bla []int
 
-		bla[i] = i
+	n := 10
+
+	for i := 0; i < n; i++ {
+
+		bla = append(bla, i)
 
 	}
 
-	ble := make([]int, 10)
+	fmt.Println("To be inserted: ", bla)
 
-	fmt.Println("bla", bla)
+	for i := 0; i < n; i++ {
 
-	copy_result := copy(ble[0:5], bla[5:len(bla)])
+		splitList.Add(i)
 
-	fmt.Println("bla", bla)
+		fmt.Println("Attempting to find", i, ", success: ", splitList.Find(i))
 
-	fmt.Println("ble", ble)
+	}
 
-	fmt.Println("Copy Result", copy_result)
+	fmt.Println("Testing if it finds elements that are NOT in")
+
+	for i := 19; i > 9; i-- {
+
+		fmt.Println("Attempting to find", i, ", success: ", splitList.Find(i))
+
+	}
 
 }
 
-func TestAdd(t *testing.T) {
+func TestAddFindSequential(t *testing.T) {
 
-	splitList := SplitList{}
-	splitList.CurrentHeight = -1
-	splitList.Load = 1000
+	splitList := NewSplitList(1024)
 
-	fmt.Println("there yet?")
 	fmt.Println(splitList)
 
 	var bla []int
 
-	n := 10000000
+	n := 10_000_000
 
 	for i := n; i >= 0; i-- {
 
-		bla = append(bla, rand.Intn(100_000_000))
-
-		//bla = append(bla, i)
+		bla = append(bla, i) //rand.Intn(300))
 
 	}
 
@@ -84,7 +93,7 @@ func TestAdd(t *testing.T) {
 
 	summ := 0
 
-	for i := 0; i < splitList.CurrentHeight; i++ {
+	for i := 0; i <= splitList.CurrentHeight; i++ {
 
 		for j := range splitList.ListOfBucketLists[i].Buckets {
 
@@ -94,25 +103,215 @@ func TestAdd(t *testing.T) {
 
 	}
 
-	if summ != n {
+	if (summ - 1) != n {
 
-		t.Errorf("Inserted elements: %d, found ones: %d", n, summ)
+		t.Errorf("Inserted elements: %d, found ones: %d", n, summ-1)
 
 	}
 
-	/*
+	start = time.Now()
 
-		for i := 0; i < splitList.CurrentHeight; i++ {
+	for i := n; i >= 0; i-- {
 
-			for j := range splitList.ListOfBucketLists[i].Buckets {
+		if splitList.Find(bla[i]) != true {
 
-				fmt.Println("Length: ", len(splitList.ListOfBucketLists[i].Buckets[j].Indexes))
+			t.Errorf("Could not find %d", i)
 
-			}
-
-			fmt.Println(splitList.ListOfBucketLists[i])
 		}
-	*/
+
+	}
+
+	elapsed = time.Since(start)
+
+	fmt.Printf("Time to find %d : %d seconds \n", n, elapsed/1_000_000_000)
+
+}
+
+func TestAddFindRandom(t *testing.T) {
+
+	splitList := NewSplitList(1024)
+
+	fmt.Println(splitList)
+
+	var bla []int
+
+	n := 10_000_000
+
+	for i := n; i >= 0; i-- {
+
+		bla = append(bla, rand.Intn(100_000_000)) //rand.Intn(300))
+
+	}
+
+	start := time.Now()
+
+	for i := n; i >= 0; i-- {
+
+		splitList.Add(bla[i])
+
+	}
+
+	elapsed := time.Since(start)
+
+	fmt.Printf("Time to insert %d : %d seconds \n", n, elapsed/1_000_000_000)
+
+	summ := 0
+
+	for i := 0; i <= splitList.CurrentHeight; i++ {
+
+		for j := range splitList.ListOfBucketLists[i].Buckets {
+
+			summ += len(splitList.ListOfBucketLists[i].Buckets[j].Indexes)
+
+		}
+
+	}
+
+	if (summ - 1) != n {
+
+		t.Errorf("Inserted elements: %d, found ones: %d", n, summ-1)
+
+	}
+
+	start = time.Now()
+
+	for i := n; i >= 0; i-- {
+
+		if splitList.Find(bla[i]) != true {
+
+			t.Errorf("Could not find %d", i)
+
+		}
+
+	}
+
+	elapsed = time.Since(start)
+
+	fmt.Printf("Time to find %d : %d seconds \n", n, elapsed/1_000_000_000)
+
+}
+
+func BenchmarkSplitListRandAdd(b *testing.B) {
+
+	var bla []int
+
+	splitList := NewSplitList(1024)
+
+	n := 2_000_000
+
+	for i := 0; i < n; i++ {
+
+		bla = append(bla, rand.Intn(100_000_000))
+	}
+
+	for i := 0; i < (n / 2); i++ {
+
+		splitList.Add(bla[i])
+
+	}
+
+	b.ResetTimer()
+
+	for i := (n / 2); i < b.N; i++ {
+
+		splitList.Add(bla[i])
+
+	}
+
+}
+
+func BenchmarkSplitListIncAdd(b *testing.B) {
+
+	var bla []int
+
+	splitList := NewSplitList(1024)
+
+	n := 2_000_000
+
+	for i := 0; i < n; i++ {
+
+		bla = append(bla, i)
+	}
+
+	for i := 0; i < (n / 2); i++ {
+
+		splitList.Add(bla[i])
+
+	}
+
+	b.ResetTimer()
+
+	for i := (n / 2); i < b.N; i++ {
+
+		splitList.Add(bla[i])
+
+	}
+
+}
+
+func BenchmarkSplitListRandFind(b *testing.B) {
+
+	var bla []int
+
+	splitList := NewSplitList(1024)
+
+	//skipList := New()
+
+	n := 2_000_000
+
+	for i := 0; i < n; i++ {
+
+		bla = append(bla, rand.Intn(100_000_000))
+	}
+
+	//var a []int
+
+	for i := 0; i < n/2; i++ {
+
+		splitList.Add(bla[i])
+
+	}
+
+	b.ResetTimer()
+
+	for i := n / 2; i < b.N; i++ {
+
+		splitList.Find(bla[i])
+
+	}
+
+}
+
+func BenchmarkSplitListIncFind(b *testing.B) {
+
+	var bla []int
+
+	splitList := NewSplitList(1024)
+
+	//skipList := New()
+
+	n := 2_000_000
+
+	for i := 0; i < n; i++ {
+
+		bla = append(bla, i)
+	}
+
+	//var a []int
+
+	for i := 0; i < n/2; i++ {
+
+		splitList.Add(bla[i])
+
+	}
+
+	b.ResetTimer()
+
+	for i := n / 2; i < b.N; i++ {
+
+		splitList.Find(bla[i])
+
+	}
 
 }
 
@@ -126,104 +325,7 @@ func (e Element) String() string {
 	return fmt.Sprintf("%03d", e)
 }
 
-/*
-
-func TestSkipListAdd(t *testing.T) {
-
-	var bla []int
-
-	skipList := New()
-
-	n := 10_000_000
-
-	for i := n; i >= 0; i-- {
-
-		bla = append(bla, rand.Intn(100_000_000))
-
-	}
-
-	start := time.Now()
-
-	for i := n; i >= 0; i-- {
-
-		skipList.Insert(Element(bla[i]))
-
-	}
-
-	elapsed := time.Since(start)
-
-	fmt.Printf("Time to insert %d : %d seconds \n", n, elapsed/1_000_000_000)
-
-}
-*/
-func TestFind(t *testing.T) {
-
-	splitList := SplitList{}
-	splitList.CurrentHeight = -1
-	splitList.Load = 1000
-
-	n := 10_000_000
-
-	for i := 0; i < n; i++ {
-
-		splitList.Add(i)
-
-	}
-
-	start := time.Now()
-
-	for i := 0; i < n; i++ {
-
-		if splitList.Find(i) != true {
-
-			t.Errorf("Could not find %d", i)
-
-		}
-
-	}
-
-	elapsed := time.Since(start)
-
-	fmt.Printf("Time to find %d : %d seconds \n", n, elapsed/1_000_000_000)
-
-}
-
-func TestInsort(t *testing.T) {
-
-	var nums []int
-	var bla []int
-
-	n := 100_000
-
-	for i := 1; i < n; i++ {
-
-		nums = append(nums, rand.Intn(20_000_000)) //append(nums, rand.Intn(20_000_000))
-	}
-
-	for i := 1; i < n; i++ {
-
-		bla = insortInt(bla, nums[i-1])
-
-	}
-
-	sort.Slice(nums, func(i, j int) bool { return nums[i] < nums[j] })
-
-	for i := 1; i < n; i++ {
-
-		if nums[i-1] != bla[i-1] {
-
-			t.Errorf("bla ain't working at %d == %d", nums[i], bla[i])
-
-		}
-
-	}
-
-}
-
-/*
-func BenchmarkSkipListAdd(b *testing.B) {
-
-	//tlist := NewTeleportList()
+func BenchmarkMauriceSkipListRandAdd(b *testing.B) {
 
 	var bla []int
 
@@ -231,76 +333,16 @@ func BenchmarkSkipListAdd(b *testing.B) {
 	//splitList.CurrentHeight = -1
 	//splitList.Load = 2000
 
-	skipList := New()
+	skipList := mauriceSkipList.New()
 
-	n := 10_000_000
+	n := 2_000_000
 
-	for i := 1; i < n; i++ {
-
-		bla = append(bla, rand.Intn(20_000_000))
-	}
-
-	b.ResetTimer()
-
-	//var a []int
-
-	for i := 1; i < b.N; i++ {
-
-		skipList.Insert(Element(bla[i]))
-
-	}
-
-}
-*/
-func BenchmarkSplitListAdd(b *testing.B) {
-
-	var bla []int
-
-	splitList := SplitList{}
-	splitList.CurrentHeight = -1
-	splitList.Load = 2000
-
-	n := 20_000_000
-
-	for i := 1; i < n; i++ {
+	for i := 0; i < n; i++ {
 
 		bla = append(bla, rand.Intn(100_000_000))
 	}
 
-	for i := 1; i < (n / 2); i++ {
-
-		splitList.Add(bla[i])
-
-	}
-
-	b.ResetTimer()
-
-	for i := (n / 2); i < b.N; i++ {
-
-		splitList.Add(bla[i])
-
-	}
-
-}
-
-func BenchmarkSkipListAdd(b *testing.B) {
-
-	var bla []int
-
-	//splitList := SplitList{}
-	//splitList.CurrentHeight = -1
-	//splitList.Load = 2000
-
-	skipList := New()
-
-	n := 20_000_000
-
-	for i := 1; i < n; i++ {
-
-		bla = append(bla, rand.Intn(100_000_000))
-	}
-
-	for i := 1; i < (n / 2); i++ {
+	for i := 0; i < (n / 2); i++ {
 
 		skipList.Insert(Element(bla[i]))
 
@@ -316,22 +358,55 @@ func BenchmarkSkipListAdd(b *testing.B) {
 
 }
 
-func BenchmarkSkipListFind(b *testing.B) {
+func BenchmarkMauriceSkipListIncAdd(b *testing.B) {
 
 	var bla []int
 
-	skipList := New()
+	//splitList := SplitList{}
+	//splitList.CurrentHeight = -1
+	//splitList.Load = 2000
 
-	n := 10_000_000
+	skipList := mauriceSkipList.New()
 
-	for i := 1; i < n; i++ {
+	n := 2_000_000
 
-		bla = append(bla, rand.Intn(20_000_000))
+	for i := 0; i < n; i++ {
+
+		bla = append(bla, i)
 	}
 
-	for i := 1; i < n/2; i++ {
+	for i := 0; i < (n / 2); i++ {
 
-		skipList.Insert(Element(bla[i-1]))
+		skipList.Insert(Element(bla[i]))
+
+	}
+
+	b.ResetTimer()
+
+	for i := (n / 2); i < b.N; i++ {
+
+		skipList.Insert(Element(bla[i]))
+
+	}
+
+}
+
+func BenchmarkMauriceSkipListRandFind(b *testing.B) {
+
+	var bla []int
+
+	skipList := mauriceSkipList.New()
+
+	n := 2_000_000
+
+	for i := 0; i < n; i++ {
+
+		bla = append(bla, rand.Intn(100_000_000))
+	}
+
+	for i := 0; i < n/2; i++ {
+
+		skipList.Insert(Element(bla[i]))
 
 	}
 
@@ -339,43 +414,278 @@ func BenchmarkSkipListFind(b *testing.B) {
 
 	for i := n / 2; i < n; i++ {
 
-		skipList.Find(Element(bla[i-1]))
+		skipList.Find(Element(bla[i]))
 
 	}
 
 }
 
-func BenchmarkSplitListFind(b *testing.B) {
+func BenchmarkMauriceSkipListIncFind(b *testing.B) {
 
 	var bla []int
 
-	splitList := SplitList{}
-	splitList.CurrentHeight = -1
-	splitList.Load = 2000
+	skipList := mauriceSkipList.New()
 
-	//skipList := New()
+	n := 2_000_000
 
-	n := 20_000_000
+	for i := 0; i < n; i++ {
 
-	for i := 1; i < n; i++ {
-
-		bla = append(bla, rand.Intn(100_000_000))
+		bla = append(bla, i)
 	}
 
-	//var a []int
+	for i := 0; i < n/2; i++ {
 
-	for i := 1; i < n/2; i++ {
-
-		splitList.Add(bla[i-1])
+		skipList.Insert(Element(bla[i]))
 
 	}
 
 	b.ResetTimer()
 
-	for i := n / 2; i < b.N; i++ {
+	for i := n / 2; i < n; i++ {
 
-		splitList.Find(bla[i-1])
+		skipList.Find(Element(bla[i]))
 
 	}
 
+}
+
+func BenchmarkSeanSkipListRandAdd(b *testing.B) {
+
+	var bla []float64
+
+	//splitList := SplitList{}
+	//splitList.CurrentHeight = -1
+	//splitList.Load = 2000
+
+	skipList := seanSkipList.New()
+
+	n := 2_000_000
+
+	for i := 0; i < n; i++ {
+
+		bla = append(bla, rand.Float64()*100_000_000)
+	}
+
+	for i := 0; i < (n / 2); i++ {
+
+		skipList.Set(bla[i], "")
+
+	}
+
+	b.ResetTimer()
+
+	for i := (n / 2); i < b.N; i++ {
+
+		skipList.Set(bla[i], "")
+
+	}
+
+}
+
+func BenchmarkSeanSkipListIncAdd(b *testing.B) {
+
+	var bla []float64
+
+	skipList := seanSkipList.New()
+
+	n := 2_000_000
+
+	for i := 0; i < n; i++ {
+
+		bla = append(bla, float64(i))
+	}
+
+	for i := 0; i < (n / 2); i++ {
+
+		skipList.Set(bla[i], "")
+
+	}
+
+	b.ResetTimer()
+
+	for i := (n / 2); i < b.N; i++ {
+
+		skipList.Set(bla[i], "")
+
+	}
+
+}
+
+func BenchmarkSeanSkipListRandFind(b *testing.B) {
+
+	var bla []float64
+
+	skipList := seanSkipList.New()
+
+	n := 2_000_000
+
+	for i := 0; i < n; i++ {
+
+		bla = append(bla, rand.Float64()*100_000_000)
+	}
+
+	for i := 0; i < n/2; i++ {
+
+		skipList.Set(bla[i], "")
+
+	}
+
+	b.ResetTimer()
+
+	for i := n / 2; i < n; i++ {
+
+		skipList.Get(bla[i])
+
+	}
+
+}
+
+func BenchmarkSeanSkipListIncFind(b *testing.B) {
+
+	var bla []float64
+
+	skipList := seanSkipList.New()
+
+	n := 2_000_000
+
+	for i := 0; i < n; i++ {
+
+		bla = append(bla, float64(i))
+	}
+
+	for i := 0; i < n/2; i++ {
+
+		skipList.Set(bla[i], "")
+
+	}
+
+	b.ResetTimer()
+
+	for i := n / 2; i < n; i++ {
+
+		skipList.Get(bla[i])
+
+	}
+
+}
+
+type Int int
+
+func (a Int) Less(b btree.Item) bool {
+	return a < b.(Int)
+}
+
+func BenchmarkGBTreeSkipListRandAdd(b *testing.B) {
+
+	var bla []Int
+
+	bTree := btree.New(256)
+
+	n := 2_000_000
+
+	for i := 0; i < n; i++ {
+
+		bla = append(bla, Int(rand.Intn(100_000_000)))
+	}
+
+	for i := 0; i < (n / 2); i++ {
+
+		bTree.ReplaceOrInsert(bla[i])
+
+	}
+
+	b.ResetTimer()
+
+	for i := (n / 2); i < b.N; i++ {
+
+		bTree.ReplaceOrInsert(bla[i])
+
+	}
+
+}
+
+func BenchmarkGBTreeSkipListIncAdd(b *testing.B) {
+
+	var bla []Int
+
+	bTree := btree.New(256)
+
+	n := 2_000_000
+
+	for i := 0; i < n; i++ {
+
+		bla = append(bla, Int(i))
+	}
+
+	for i := 0; i < (n / 2); i++ {
+
+		bTree.ReplaceOrInsert(bla[i])
+
+	}
+
+	b.ResetTimer()
+
+	for i := (n / 2); i < b.N; i++ {
+
+		bTree.ReplaceOrInsert(bla[i])
+
+	}
+
+}
+
+func BenchmarkGBTreeSkipListRandFind(b *testing.B) {
+
+	var bla []Int
+
+	bTree := btree.New(256)
+
+	n := 2_000_000
+
+	for i := 0; i < n; i++ {
+
+		bla = append(bla, Int(rand.Intn(100_000_000)))
+	}
+
+	for i := 0; i < n/2; i++ {
+
+		bTree.ReplaceOrInsert(bla[i])
+
+	}
+
+	b.ResetTimer()
+
+	for i := n / 2; i < n; i++ {
+
+		bTree.Get(bla[i])
+
+	}
+
+}
+
+func BenchmarkGBTreeSkipListIncFind(b *testing.B) {
+
+	var bla []Int
+
+	bTree := btree.New(256)
+
+	n := 2_000_000
+
+	for i := 0; i < n; i++ {
+
+		bla = append(bla, Int(i))
+	}
+
+	for i := 0; i < n/2; i++ {
+
+		bTree.ReplaceOrInsert(bla[i])
+
+	}
+
+	b.ResetTimer()
+
+	for i := n / 2; i < n; i++ {
+
+		bTree.Get(bla[i])
+
+	}
 }

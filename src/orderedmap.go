@@ -38,7 +38,7 @@ func (l *ListOfBuckets) Balance(i int, load int) {
 
 	half_load := load / 2
 
-	new_bucket_indexes := make([]int, half_load)
+	new_bucket_indexes := make([]int, half_load, load)
 
 	for i := half_load - 1; i >= 0; i-- {
 
@@ -63,17 +63,15 @@ func (l *ListOfBuckets) Balance(i int, load int) {
 
 }
 
-func NewSplitList() SplitList {
+func NewSplitList(load int) SplitList {
+
 	splitList := SplitList{}
 	splitList.CurrentHeight = -1
-	for i := 0; i < 30; i++ {
+	splitList.Load = load
+	splitList.Length = 0
 
-		newListOfBuckets := ListOfBuckets{}
-		newListOfBuckets.Height = -1
-
-		splitList.ListOfBucketLists[i] = newListOfBuckets
-	}
 	return splitList
+
 }
 
 func (s *SplitList) Add(key int) {
@@ -89,6 +87,7 @@ func (s *SplitList) Add(key int) {
 			newBucket := Bucket{}
 			newBucket.Max = math.MinInt64
 			newBucket.Min = math.MaxInt64
+			newBucket.Indexes = make([]int, 0, 2000)
 			newListOfBuckets.Buckets = append(newListOfBuckets.Buckets, newBucket)
 
 			s.ListOfBucketLists = append(s.ListOfBucketLists, newListOfBuckets)
@@ -143,6 +142,8 @@ func (s *SplitList) Add(key int) {
 		}
 
 	}
+
+	s.Length += 1
 
 }
 
