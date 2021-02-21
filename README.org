@@ -2,6 +2,6 @@
 
 This is an experiment on translating the python library witchcraft to go.
 
-At the moment it is around 4 times **faster** than the supposedly **fastest** skiplist library in Go
+At the moment it is around 4 times *faster*, in insertions, than the supposedly *fastest* skiplist library in Go, with lookups at around the same speed.
 
-You can test it with ~~go test -bench='Add' -run=^a -benchtime=19999999x~~
+You can test it with ~go test -bench='Add' -run=^a -benchtime=19999999x~
