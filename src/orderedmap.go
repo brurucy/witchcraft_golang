@@ -1,16 +1,10 @@
 package src
 
 import (
-	//"fmt"
 	"math"
 	"math/rand"
 	"sort"
 )
-
-type KeyValue struct {
-	key   int
-	value string
-}
 
 type Bucket struct {
 	Indexes []int
@@ -24,7 +18,7 @@ type ListOfBuckets struct {
 }
 
 type SplitList struct {
-	ListOfBucketLists []ListOfBuckets
+	ListOfBucketLists []*ListOfBuckets
 	CurrentHeight     int
 	Length            int
 	Load              int
@@ -90,7 +84,7 @@ func (s *SplitList) Add(key int) {
 			newBucket.Indexes = make([]int, 0, 2000)
 			newListOfBuckets.Buckets = append(newListOfBuckets.Buckets, newBucket)
 
-			s.ListOfBucketLists = append(s.ListOfBucketLists, newListOfBuckets)
+			s.ListOfBucketLists = append(s.ListOfBucketLists, &newListOfBuckets)
 
 		}
 
@@ -149,6 +143,8 @@ func (s *SplitList) Add(key int) {
 
 func (s *SplitList) Find(key int) bool {
 
+	//len_lob := len(s.ListOfBucketLists)
+
 	for i := range s.ListOfBucketLists {
 
 		lb := &s.ListOfBucketLists[i].Buckets
@@ -178,4 +174,53 @@ func (s *SplitList) Find(key int) bool {
 
 	return false
 
+}
+
+func (s *SplitList) Delete(key int) bool {
+
+	for i := range s.ListOfBucketLists {
+
+		lb := &s.ListOfBucketLists[i].Buckets
+		len_lb := len(*lb)
+
+		if len_lb != 0 {
+
+			if !(key > (*lb)[len_lb-1].Max || key < (*lb)[0].Min) {
+
+				i = sort.Search(len_lb, func(i int) bool { return (*lb)[i].Max >= key })
+
+				if (i != len_lb) && (!((*lb)[i].Min > key)) {
+
+					len_idx := len((*lb)[i].Indexes)
+
+					j := sort.Search(len_idx, func(k int) bool { return (*lb)[i].Indexes[k] >= key })
+
+					if j < len_idx && (*lb)[i].Indexes[j] == key {
+
+						if len_idx == 1 {
+
+							*lb = (*lb)[:i+copy((*lb)[i:], (*lb)[i+1:])]
+
+						} else {
+
+							(*lb)[i].Indexes = (*lb)[i].Indexes[:j+copy((*lb)[i].Indexes[j:], (*lb)[i].Indexes[j+1:])]
+							(*lb)[i].Max = (*lb)[i].Indexes[len((*lb)[i].Indexes)-1]
+							(*lb)[i].Min = (*lb)[i].Indexes[0]
+
+						}
+
+						s.Length -= 1
+
+						return true
+
+					}
+
+				}
+
+			}
+
+		}
+
+	}
+	return false
 }

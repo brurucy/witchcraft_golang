@@ -39,7 +39,7 @@ func TestAddFindSmall(t *testing.T) {
 
 	for i := 0; i < n; i++ {
 
-		bla = append(bla, i)
+		bla = append(bla, rand.Intn(100))
 
 	}
 
@@ -47,7 +47,7 @@ func TestAddFindSmall(t *testing.T) {
 
 	for i := 0; i < n; i++ {
 
-		splitList.Add(i)
+		splitList.Add(bla[i])
 
 		fmt.Println("Attempting to find", i, ", success: ", splitList.Find(i))
 
@@ -58,6 +58,28 @@ func TestAddFindSmall(t *testing.T) {
 	for i := 19; i > 9; i-- {
 
 		fmt.Println("Attempting to find", i, ", success: ", splitList.Find(i))
+
+	}
+
+	for i := 0; i < n; i++ {
+
+		fmt.Println("Before removing")
+
+		for j := range splitList.ListOfBucketLists {
+
+			fmt.Println(*splitList.ListOfBucketLists[j])
+
+		}
+
+		fmt.Println("Attempting to remove ", bla[i])
+
+		splitList.Delete(bla[i])
+
+		for j := range splitList.ListOfBucketLists {
+
+			fmt.Println(*splitList.ListOfBucketLists[j])
+
+		}
 
 	}
 
@@ -179,7 +201,7 @@ func TestAddFindRandom(t *testing.T) {
 
 		if splitList.Find(bla[i]) != true {
 
-			t.Errorf("Could not find %d", i)
+			t.Errorf("Could not find %d", bla[i])
 
 		}
 
@@ -188,6 +210,32 @@ func TestAddFindRandom(t *testing.T) {
 	elapsed = time.Since(start)
 
 	fmt.Printf("Time to find %d : %d seconds \n", n, elapsed/1_000_000_000)
+
+	fmt.Println("Elements before deleting: ", splitList.Length)
+
+	start = time.Now()
+
+	for i := n; i >= 0; i-- {
+
+		if splitList.Delete(bla[i]) != true {
+
+			t.Errorf("Could not delete %d", bla[i])
+
+		}
+
+	}
+
+	elapsed = time.Since(start)
+
+	fmt.Printf("Time to delete %d : %d seconds \n", n, elapsed/1_000_000_000)
+
+	fmt.Println("Elements after deleting: ", splitList.Length)
+
+	for j := range splitList.ListOfBucketLists {
+
+		fmt.Println(*splitList.ListOfBucketLists[j])
+
+	}
 
 }
 
@@ -244,6 +292,64 @@ func BenchmarkSplitListIncAdd(b *testing.B) {
 	for i := (n / 2); i < b.N; i++ {
 
 		splitList.Add(bla[i])
+
+	}
+
+}
+
+func BenchmarkSplitListRandDelete(b *testing.B) {
+
+	var bla []int
+
+	splitList := NewSplitList(1024)
+
+	n := 20_000_000
+
+	for i := 0; i < n; i++ {
+
+		bla = append(bla, rand.Intn(100_000_000))
+	}
+
+	for i := 0; i < n; i++ {
+
+		splitList.Add(bla[i])
+
+	}
+
+	b.ResetTimer()
+
+	for i := (n / 2); i < b.N; i++ {
+
+		splitList.Delete(bla[i])
+
+	}
+
+}
+
+func BenchmarkSplitListIncDelete(b *testing.B) {
+
+	var bla []int
+
+	splitList := NewSplitList(1024)
+
+	n := 20_000_000
+
+	for i := 0; i < n; i++ {
+
+		bla = append(bla, i)
+	}
+
+	for i := 0; i < n; i++ {
+
+		splitList.Add(bla[i])
+
+	}
+
+	b.ResetTimer()
+
+	for i := (n / 2); i < b.N; i++ {
+
+		splitList.Delete(bla[i])
 
 	}
 
