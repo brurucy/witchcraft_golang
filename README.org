@@ -1,7 +1,12 @@
 * Hello.
 
-This is an experiment on translating the python library witchcraft to go.
-
 At the moment it is around 4 times *faster*, in insertions, than the supposedly *fastest* skiplist library in Go, with lookups at around the same speed.
 
 You can test it with ~go test -bench='Add' -run=^a -benchtime=19999999x~
+
+Current tasks that need to be done:
+
+** Adding Selection - https://cstheory.stackexchange.com/questions/20944/select-in-union-of-sorted-arrays-already-known/31968 - Greg N. Frederickson and Donald B. Johnson. 1980. Generalized selection and ranking (Preliminary Version) - Page 3, "Sorted Partitions"
+** Adding fractional cascading
+** Investigate https://arxiv.org/pdf/1904.04828.pdf
+** Making the code decent
