@@ -10,14 +10,14 @@ const (
 	capBucket = 2000
 )
 
-type BucketNew struct {
+type Bucket struct {
 	Indexes []int
 	Min     int
 	Max     int
 }
 
 type ListOfBuckets struct {
-	Buckets []*BucketNew
+	Buckets []*Bucket
 	Height  int
 }
 
@@ -26,6 +26,21 @@ type SplitList struct {
 	CurrentHeight     int
 	Length            int
 	Load              int
+}
+
+func NewSplitList(load int) *SplitList {
+	splitList := &SplitList{
+		ListOfBucketLists: make([]*ListOfBuckets, 0),
+		CurrentHeight:     -1,
+		Length:            0,
+		Load:              load,
+	}
+
+	return splitList
+}
+
+func getRandomHeight() int {
+	return int(math.Abs(math.Log2(rand.Float64())))
 }
 
 func (l *ListOfBuckets) Balance(idx, load int) {
@@ -39,7 +54,7 @@ func (l *ListOfBuckets) Balance(idx, load int) {
 		newIndexes[i] = tmpIndexes
 	}
 
-	newBucket := &BucketNew{
+	newBucket := &Bucket{
 		Indexes: newIndexes,
 		Min:     newIndexes[0],
 		Max:     candidate.Max,
@@ -51,7 +66,7 @@ func (l *ListOfBuckets) Balance(idx, load int) {
 		return l.Buckets[i].Max >= newBucket.Max
 	})
 
-	l.Buckets = append(l.Buckets, &BucketNew{})
+	l.Buckets = append(l.Buckets, &Bucket{})
 	copy(l.Buckets[idxB+1:], l.Buckets[idxB:])
 	l.Buckets[idxB] = newBucket
 }
@@ -82,7 +97,7 @@ func (s *SplitList) Add(key int) {
 
 	for heightDiff > 0 {
 		newListOfBuckets := &ListOfBuckets{
-			Buckets: []*BucketNew{{
+			Buckets: []*Bucket{{
 				Max:     math.MinInt64,
 				Min:     math.MaxInt64,
 				Indexes: make([]int, 0, capBucket),
@@ -135,7 +150,7 @@ func (s *SplitList) Find(key int) bool {
 }
 
 func (s *SplitList) Delete(key int) bool {
-	return s.Lookup(key, func(idxI, idxB int, buckets []*BucketNew) {
+	return s.Lookup(key, func(idxI, idxB int, buckets []*Bucket) {
 		indexes := buckets[idxB].Indexes
 
 		if len(indexes) == 1 {
@@ -150,7 +165,7 @@ func (s *SplitList) Delete(key int) bool {
 	})
 }
 
-func (s *SplitList) Lookup(key int, f func(int, int, []*BucketNew)) bool {
+func (s *SplitList) Lookup(key int, f func(int, int, []*Bucket)) bool {
 	for _, list := range s.ListOfBucketLists {
 		listBuckets := list.Buckets
 
