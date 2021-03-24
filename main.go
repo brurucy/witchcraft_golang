@@ -34,7 +34,8 @@ func main() {
 	less := func(a, b interface{}) bool {
 		return a.(*intT).val < b.(*intT).val
 	}
-	N := 1_000_000
+	N := 10_000_000
+	var temp intT
 	keys := make([]intT, N)
 	for i := 0; i < N; i++ {
 		keys[i] = intT{i}
@@ -57,185 +58,198 @@ func main() {
 
 	println()
 	println("** sequential set **")
+	sortInts()
 
 	print("mauricesl:  set-seq\t")
 	skipList := mauriceSkipList.New()
-	sortInts()
 	lotsa.Ops(N, 1, func(i, _ int) {
 		skipList.Insert(Element(keys[i].val))
 	})
+
 	print("seansl:  set-seq\t")
 	skipList2 := seanSkipList.New()
-	sortInts()
 	lotsa.Ops(N, 1, func(i, _ int) {
 		skipList2.Set(float64(keys[i].val), "")
 	})
+
 	print("google:  set-seq\t")
 	tr2 := gbtree.New(256)
-	sortInts()
 	lotsa.Ops(N, 1, func(i, _ int) {
 		tr2.ReplaceOrInsert(&keys[i])
 	})
+
 	print("tidwall: set-seq\t")
 	tr := tbtree.New(less)
-	sortInts()
 	lotsa.Ops(N, 1, func(i, _ int) {
 		tr.Set(&keys[i])
 	})
+
 	print("tidwall: set-seq-hint\t")
 	tr = tbtree.New(less)
-	sortInts()
 	var hint tbtree.PathHint
 	lotsa.Ops(N, 1, func(i, _ int) {
 		tr.SetHint(&keys[i], &hint)
 	})
+
 	print("tidwall: load-seq\t")
 	tr = tbtree.New(less)
-	sortInts()
 	lotsa.Ops(N, 1, func(i, _ int) {
 		tr.Load(&keys[i])
 	})
-	print("go-arr:  append\t\t")
+
+	print("go-arr:  append-seq\t")
 	var arr []interface{}
-	sortInts()
 	lotsa.Ops(N, 1, func(i, _ int) {
 		arr = append(arr, &keys[i])
 	})
+
 	print("splitlist: add\t\t")
-	sortInts()
 	tsl := src.NewSplitList(1024)
 	lotsa.Ops(N, 1, func(i, _ int) {
 		tsl.Add(keys[i].val)
 	})
 
-	println()
-	println("** random set **")
-
-	print("mauricesl:  set-seq\t")
-	skipList = mauriceSkipList.New()
-	shuffleInts()
+	print("go-hashmap: set-seq\t")
+	hm := make(map[int]intT, 0)
 	lotsa.Ops(N, 1, func(i, _ int) {
-		skipList.Insert(Element(keys[i].val))
-	})
-	print("seansl:  set-seq\t")
-	skipList2 = seanSkipList.New()
-	shuffleInts()
-	lotsa.Ops(N, 1, func(i, _ int) {
-		skipList2.Set(float64(keys[i].val), "")
-	})
-	print("google:  set-rand\t")
-	tr2 = gbtree.New(256)
-	shuffleInts()
-	lotsa.Ops(N, 1, func(i, _ int) {
-		tr2.ReplaceOrInsert(&keys[i])
-	})
-	print("tidwall: set-rand\t")
-	tr = tbtree.New(less)
-	shuffleInts()
-	lotsa.Ops(N, 1, func(i, _ int) {
-		tr.Set(&keys[i])
-	})
-	print("tidwall: set-rand-hint\t")
-	tr = tbtree.New(less)
-	shuffleInts()
-	lotsa.Ops(N, 1, func(i, _ int) {
-		tr.SetHint(&keys[i], &hint)
-	})
-	print("tidwall: set-again\t")
-	shuffleInts()
-	lotsa.Ops(N, 1, func(i, _ int) {
-		tr.Set(&keys[i])
-	})
-	print("tidwall: set-after-copy\t")
-	tr = tr.Copy()
-	shuffleInts()
-	lotsa.Ops(N, 1, func(i, _ int) {
-		tr.Set(&keys[i])
-	})
-	print("tidwall: load-rand\t")
-	tr = tbtree.New(less)
-	shuffleInts()
-	lotsa.Ops(N, 1, func(i, _ int) {
-		tr.Load(&keys[i])
-	})
-	print("splitlist: add\t\t")
-	shuffleInts()
-	tsl = src.NewSplitList(1024)
-	lotsa.Ops(N, 1, func(i, _ int) {
-		tsl.Add(keys[i].val)
+		hm[i] = keys[i]
 	})
 
 	println()
 	println("** sequential get **")
 
-	print("mauricesl:  get		")
-	skipList = mauriceSkipList.New()
-	sortInts()
+	print("mauricesl:  find-seq\t")
 	lotsa.Ops(N, 1, func(i, _ int) {
 		skipList.Find(Element(keys[i].val))
 	})
-	print("seansl:  get\t\t")
-	skipList2 = seanSkipList.New()
-	sortInts()
+
+	print("seansl:  get-seq\t")
 	lotsa.Ops(N, 1, func(i, _ int) {
 		skipList2.Get(float64(keys[i].val))
 	})
+
 	print("google:  get-seq\t")
-	sortInts()
 	lotsa.Ops(N, 1, func(i, _ int) {
 		tr2.Get(&keys[i])
 	})
+
 	print("tidwall: get-seq\t")
-	sortInts()
 	lotsa.Ops(N, 1, func(i, _ int) {
 		tr.Get(&keys[i])
 	})
+
 	print("tidwall: get-seq-hint\t")
-	sortInts()
 	lotsa.Ops(N, 1, func(i, _ int) {
 		tr.GetHint(&keys[i], &hint)
 	})
+
 	print("splitlist: find seq\t")
-	sortInts()
-	tsl = src.NewSplitList(1024)
 	lotsa.Ops(N, 1, func(i, _ int) {
 		tsl.Find(keys[i].val)
+	})
+
+	print("go-hashmap: get-seq\t")
+	lotsa.Ops(N, 1, func(i, _ int) {
+		temp = hm[i]
+	})
+
+	println()
+	println("** random set **")
+	shuffleInts()
+
+	print("mauricesl: set-rand\t")
+	skipList = mauriceSkipList.New()
+	lotsa.Ops(N, 1, func(i, _ int) {
+		skipList.Insert(Element(keys[i].val))
+	})
+
+	print("seansl: set-rand\t")
+	skipList2 = seanSkipList.New()
+	lotsa.Ops(N, 1, func(i, _ int) {
+		skipList2.Set(float64(keys[i].val), "")
+	})
+
+	print("google: set-rand\t")
+	tr2 = gbtree.New(256)
+	lotsa.Ops(N, 1, func(i, _ int) {
+		tr2.ReplaceOrInsert(&keys[i])
+	})
+
+	print("tidwall: set-rand\t")
+	tr = tbtree.New(less)
+	lotsa.Ops(N, 1, func(i, _ int) {
+		tr.Set(&keys[i])
+	})
+
+	print("tidwall: set-rand-hint\t")
+	tr = tbtree.New(less)
+	lotsa.Ops(N, 1, func(i, _ int) {
+		tr.SetHint(&keys[i], &hint)
+	})
+
+	print("tidwall: set-rand-again\t")
+	lotsa.Ops(N, 1, func(i, _ int) {
+		tr.Set(&keys[i])
+	})
+
+	print("tidwall: set-copy-rand\t")
+	tr = tr.Copy()
+	lotsa.Ops(N, 1, func(i, _ int) {
+		tr.Set(&keys[i])
+	})
+
+	print("tidwall: load-rand\t")
+	tr = tbtree.New(less)
+	lotsa.Ops(N, 1, func(i, _ int) {
+		tr.Load(&keys[i])
+	})
+
+	print("splitlist: add-rand\t")
+	tsl = src.NewSplitList(1024)
+	lotsa.Ops(N, 1, func(i, _ int) {
+		tsl.Add(keys[i].val)
+	})
+
+	print("go-hashmap: set-rand\t")
+	lotsa.Ops(N, 1, func(i, _ int) {
+		hm[keys[i].val] = keys[i]
 	})
 
 	println()
 	println("** random get **")
 
-	print("mauricesl:  get\t\t")
-	skipList = mauriceSkipList.New()
-	shuffleInts()
+	print("mauricesl: find-rand\t")
 	lotsa.Ops(N, 1, func(i, _ int) {
 		skipList.Find(Element(keys[i].val))
 	})
-	print("seansl:  get\t\t")
-	skipList2 = seanSkipList.New()
-	shuffleInts()
+
+	print("seansl: get-rand\t")
 	lotsa.Ops(N, 1, func(i, _ int) {
 		skipList2.Get(float64(keys[i].val))
 	})
-	print("google:  get-rand\t")
-	shuffleInts()
+
+	print("google: get-rand\t")
 	lotsa.Ops(N, 1, func(i, _ int) {
 		tr2.Get(&keys[i])
 	})
+
 	print("tidwall: get-rand\t")
-	shuffleInts()
 	lotsa.Ops(N, 1, func(i, _ int) {
 		tr.Get(&keys[i])
 	})
-	print("tidwall: get-rand-hint\t")
-	shuffleInts()
+
+	print("tidwall: get-hint-rand\t")
 	lotsa.Ops(N, 1, func(i, _ int) {
 		tr.GetHint(&keys[i], &hint)
 	})
-	print("splitlist: find random\t")
-	shuffleInts()
-	tsl = src.NewSplitList(1024)
+
+	print("splitlist: find-rand\t")
 	lotsa.Ops(N, 1, func(i, _ int) {
 		tsl.Find(keys[i].val)
+	})
+
+	print("go-hashmap: get-rand\t")
+	lotsa.Ops(N, 1, func(i, _ int) {
+		temp = hm[keys[i].val]
 	})
 }

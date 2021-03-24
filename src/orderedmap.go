@@ -68,6 +68,7 @@ func NewSplitList(load int) *SplitList {
 }
 
 func getRandomHeight() int {
+
 	return int(math.Abs(math.Log2(rand.Float64())))
 }
 
