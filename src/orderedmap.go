@@ -10,14 +10,14 @@ const (
 	capBucket = 2000
 )
 
-type BucketNew struct {
+type Bucket struct {
 	Indexes []int
 	Min     int
 	Max     int
 }
 
 type ListOfBuckets struct {
-	Buckets []*BucketNew
+	Buckets []*Bucket
 	Height  int
 }
 
@@ -26,34 +26,6 @@ type SplitList struct {
 	CurrentHeight     int
 	Length            int
 	Load              int
-}
-
-func (l *ListOfBuckets) Balance(idx, load int) {
-	candidate := l.Buckets[idx]
-	halfLoad := load / 2
-	newIndexes := make([]int, halfLoad, load)
-
-	for i := halfLoad - 1; i >= 0; i-- {
-		tmpIndexes := candidate.Indexes[len(candidate.Indexes)-1]
-		candidate.Indexes = candidate.Indexes[:len(candidate.Indexes)-1]
-		newIndexes[i] = tmpIndexes
-	}
-
-	newBucket := &BucketNew{
-		Indexes: newIndexes,
-		Min:     newIndexes[0],
-		Max:     candidate.Max,
-	}
-
-	candidate.Max = candidate.Indexes[len(candidate.Indexes)-1]
-
-	idxB := sort.Search(len(l.Buckets), func(i int) bool {
-		return l.Buckets[i].Max >= newBucket.Max
-	})
-
-	l.Buckets = append(l.Buckets, &BucketNew{})
-	copy(l.Buckets[idxB+1:], l.Buckets[idxB:])
-	l.Buckets[idxB] = newBucket
 }
 
 func NewSplitList(load int) *SplitList {
@@ -71,6 +43,34 @@ func getRandomHeight() int {
 	return int(math.Abs(math.Log2(rand.Float64())))
 }
 
+func (l *ListOfBuckets) Balance(idx, load int) {
+	candidate := l.Buckets[idx]
+	halfLoad := load / 2
+	newIndexes := make([]int, halfLoad, load)
+
+	for i := halfLoad - 1; i >= 0; i-- {
+		tmpIndexes := candidate.Indexes[len(candidate.Indexes)-1]
+		candidate.Indexes = candidate.Indexes[:len(candidate.Indexes)-1]
+		newIndexes[i] = tmpIndexes
+	}
+
+	newBucket := &Bucket{
+		Indexes: newIndexes,
+		Min:     newIndexes[0],
+		Max:     candidate.Max,
+	}
+
+	candidate.Max = candidate.Indexes[len(candidate.Indexes)-1]
+
+	idxB := sort.Search(len(l.Buckets), func(i int) bool {
+		return l.Buckets[i].Max >= newBucket.Max
+	})
+
+	l.Buckets = append(l.Buckets, &Bucket{})
+	copy(l.Buckets[idxB+1:], l.Buckets[idxB:])
+	l.Buckets[idxB] = newBucket
+}
+
 func (s *SplitList) Add(key int) {
 	height := getRandomHeight()
 	heightDiff := height - s.CurrentHeight
@@ -81,7 +81,7 @@ func (s *SplitList) Add(key int) {
 
 	for heightDiff > 0 {
 		newListOfBuckets := &ListOfBuckets{
-			Buckets: []*BucketNew{{
+			Buckets: []*Bucket{{
 				Max:     math.MinInt64,
 				Min:     math.MaxInt64,
 				Indexes: make([]int, 0, capBucket),
@@ -134,7 +134,7 @@ func (s *SplitList) Find(key int) bool {
 }
 
 func (s *SplitList) Delete(key int) bool {
-	return s.Lookup(key, func(idxI, idxB int, buckets []*BucketNew) {
+	return s.Lookup(key, func(idxI, idxB int, buckets []*Bucket) {
 		indexes := buckets[idxB].Indexes
 
 		if len(indexes) == 1 {
@@ -149,7 +149,7 @@ func (s *SplitList) Delete(key int) bool {
 	})
 }
 
-func (s *SplitList) Lookup(key int, f func(int, int, []*BucketNew)) bool {
+func (s *SplitList) Lookup(key int, f func(int, int, []*Bucket)) bool {
 	for _, list := range s.ListOfBucketLists {
 		listBuckets := list.Buckets
 

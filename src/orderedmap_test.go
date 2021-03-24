@@ -14,7 +14,7 @@ import (
 
 func TestBalance(t *testing.T) {
 
-	lob := &ListOfBuckets{Buckets: []*BucketNew{{Indexes: []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+	lob := &ListOfBuckets{Buckets: []*Bucket{{Indexes: []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
 		Min: 1,
 		Max: 10,
 	},
