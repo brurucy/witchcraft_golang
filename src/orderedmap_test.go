@@ -698,3 +698,62 @@ func BenchmarkGBTreeSkipListIncFind(b *testing.B) {
 
 	}
 }
+
+func TestGetMinMax(t *testing.T) {
+
+	splitList := NewSplitList(1024)
+
+	//skipList := New()
+
+	n := 100000
+
+	for i := 500; i < n; i++ {
+
+		splitList.Add(i)
+
+	}
+
+	min := splitList.GetMin()
+	max := splitList.GetMax()
+
+	if min != 500 {
+
+		t.Errorf("Failed to get min")
+
+	}
+
+	if max != n-1 {
+
+		t.Errorf("Failed to get max")
+
+	}
+
+	fmt.Println(splitList.GetMin())
+	fmt.Println(splitList.GetMax())
+
+}
+
+func TestPopMinMax(t *testing.T) {
+
+	splitList := NewSplitList(1024)
+
+	//skipList := New()
+
+	n := 100000
+
+	for i := 0; i < n; i++ {
+
+		splitList.Add(i)
+
+	}
+
+	for i := 0; i < n; i++ {
+
+		poppity := splitList.PopMin()
+		fmt.Println(poppity)
+
+	}
+
+	fmt.Println(splitList.Length)
+
+}

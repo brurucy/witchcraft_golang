@@ -1,6 +1,7 @@
 package src
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
 	"sort"
@@ -39,10 +40,6 @@ func NewSplitList(load int) *SplitList {
 	return splitList
 }
 
-func getRandomHeight() int {
-	return int(math.Abs(math.Log2(rand.Float64())))
-}
-
 func (l *ListOfBuckets) Balance(idx, load int) {
 	candidate := l.Buckets[idx]
 	halfLoad := load / 2
@@ -69,17 +66,6 @@ func (l *ListOfBuckets) Balance(idx, load int) {
 	l.Buckets = append(l.Buckets, &Bucket{})
 	copy(l.Buckets[idxB+1:], l.Buckets[idxB:])
 	l.Buckets[idxB] = newBucket
-}
-
-func NewSplitList(load int) *SplitList {
-	splitList := &SplitList{
-		ListOfBucketLists: make([]*ListOfBuckets, 0),
-		CurrentHeight:     -1,
-		Length:            0,
-		Load:              load,
-	}
-
-	return splitList
 }
 
 func getRandomHeight() int {
@@ -195,4 +181,121 @@ func (s *SplitList) Lookup(key int, f func(int, int, []*Bucket)) bool {
 	}
 
 	return false
+}
+
+// Theta log(n)
+func (s *SplitList) GetMin() int {
+
+	runningMinimum := math.MaxInt64
+
+	for _, list := range s.ListOfBucketLists {
+
+		if list.Buckets[0].Min < runningMinimum {
+
+			runningMinimum = list.Buckets[0].Min
+
+		}
+
+	}
+
+	return runningMinimum
+
+}
+
+// Theta log(n)
+func (s *SplitList) GetMax() int {
+
+	runningMaximum := math.MinInt64
+
+	for _, list := range s.ListOfBucketLists {
+
+		if list.Buckets[len(list.Buckets)-1].Max > runningMaximum {
+
+			runningMaximum = list.Buckets[len(list.Buckets)-1].Max
+
+		}
+
+	}
+
+	fmt.Println("Max")
+
+	return runningMaximum
+
+}
+
+func (s *SplitList) PopMin() int {
+
+	min := s.GetMin()
+
+	for _, list := range s.ListOfBucketLists {
+
+		if list.Buckets[0].Min == min {
+
+			list.Buckets[0].Indexes = list.Buckets[0].Indexes[1:]
+
+			if len(list.Buckets[0].Indexes) == 0 {
+
+				list.Buckets[0].Min = math.MaxInt64
+				list.Buckets[0].Max = math.MinInt64
+
+			} else {
+
+				list.Buckets[0].Min = list.Buckets[0].Indexes[0]
+				list.Buckets[0].Max = list.Buckets[0].Indexes[len(list.Buckets[0].Indexes)-1]
+
+			}
+
+			s.Length--
+
+			return min
+
+		}
+
+	}
+
+	return min
+
+}
+
+func (s *SplitList) PopMax() int {
+
+	max := s.GetMax()
+
+	for _, list := range s.ListOfBucketLists {
+
+		lastBucketIndex := len(list.Buckets) - 1
+
+		if len(list.Buckets[lastBucketIndex].Indexes) == 0 {
+
+			continue
+
+		} else {
+
+			if list.Buckets[lastBucketIndex].Max == max {
+
+				list.Buckets[lastBucketIndex].Indexes = list.Buckets[lastBucketIndex].Indexes[0 : len(list.Buckets[lastBucketIndex].Indexes)-1]
+
+				if len(list.Buckets[lastBucketIndex].Indexes) == 0 {
+
+					list.Buckets[0].Min = math.MaxInt64
+					list.Buckets[0].Max = math.MinInt64
+
+				} else {
+
+					list.Buckets[lastBucketIndex].Min = list.Buckets[lastBucketIndex].Indexes[0]
+					list.Buckets[lastBucketIndex].Max = list.Buckets[lastBucketIndex].Indexes[len(list.Buckets[lastBucketIndex].Indexes)-1]
+
+				}
+
+				s.Length--
+
+				return max
+
+			}
+		}
+
+	}
+
+	return max
+
 }
