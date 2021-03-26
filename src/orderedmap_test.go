@@ -733,27 +733,50 @@ func TestGetMinMax(t *testing.T) {
 
 }
 
-func TestPopMinMax(t *testing.T) {
+func TestPopMin(t *testing.T) {
 
 	splitList := NewSplitList(1024)
 
 	//skipList := New()
 
-	n := 100000
+	n := 100_000
 
 	for i := 0; i < n; i++ {
-
 		splitList.Add(i)
-
 	}
+	//fmt.Println(splitList)
 
 	for i := 0; i < n; i++ {
-
-		poppity := splitList.PopMin()
-		fmt.Println(poppity)
+		fmt.Println(splitList.PopMin())
+		//fmt.Println(poppity)
 
 	}
 
-	fmt.Println(splitList.Length)
+	//fmt.Println(splitList)
+	for _, list := range splitList.ListOfBucketLists {
+		for _, bucket := range list.Buckets {
+			fmt.Println(bucket.Indexes)
+		}
+	}
+}
 
+func TestPopMax(t *testing.T) {
+	splitList := NewSplitList(1024)
+
+	n := 100_000
+
+	for i := 0; i < n; i++ {
+		splitList.Add(i)
+	}
+	//fmt.Println(splitList)
+
+	for i := 0; i < n; i++ {
+		fmt.Println(splitList.PopMax())
+	}
+
+	for _, list := range splitList.ListOfBucketLists {
+		for _, bucket := range list.Buckets {
+			fmt.Println(bucket.Indexes)
+		}
+	}
 }

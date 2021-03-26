@@ -252,4 +252,53 @@ func main() {
 	lotsa.Ops(N, 1, func(i, _ int) {
 		temp = hm[keys[i].val]
 	})
+
+	println()
+	println("** pop max **")
+
+	print("google: deletemax\t")
+	lotsa.Ops(N, 1, func(i, _ int) {
+		tr2.DeleteMax()
+	})
+
+	print("tidwall: popmax\t\t")
+	lotsa.Ops(N, 1, func(i, _ int) {
+		tr.PopMax()
+	})
+
+	print("splitlist: pop\t\t")
+	lotsa.Ops(N, 1, func(i, _ int) {
+		tsl.PopMax()
+	})
+
+	println()
+	lotsa.Ops(N, 1, func(i, _ int) {
+		tsl.Add(keys[i].val)
+	})
+
+	lotsa.Ops(N, 1, func(i, _ int) {
+		tr2.ReplaceOrInsert(&keys[i])
+	})
+
+	lotsa.Ops(N, 1, func(i, _ int) {
+		tr.Set(&keys[i])
+	})
+
+	println()
+	println("** pop min **")
+
+	print("google: deletemax\t")
+	lotsa.Ops(N, 1, func(i, _ int) {
+		tr2.DeleteMin()
+	})
+
+	print("tidwall: popmax\t\t")
+	lotsa.Ops(N, 1, func(i, _ int) {
+		tr.PopMin()
+	})
+
+	print("splitlist: pop\t\t")
+	lotsa.Ops(N, 1, func(i, _ int) {
+		tsl.PopMin()
+	})
 }

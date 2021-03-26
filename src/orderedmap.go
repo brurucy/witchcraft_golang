@@ -22,6 +22,16 @@ type ListOfBuckets struct {
 	Height  int
 }
 
+func (l ListOfBuckets) String() string {
+	s := ""
+
+	for _, list := range l.Buckets {
+		s += fmt.Sprintf("%v\n", list)
+	}
+
+	return s
+}
+
 type SplitList struct {
 	ListOfBucketLists []*ListOfBuckets
 	CurrentHeight     int
@@ -69,7 +79,6 @@ func (l *ListOfBuckets) Balance(idx, load int) {
 }
 
 func getRandomHeight() int {
-
 	return int(math.Abs(math.Log2(rand.Float64())))
 }
 
@@ -212,31 +221,33 @@ func (s *SplitList) GetMax() int {
 		if list.Buckets[len(list.Buckets)-1].Max > runningMaximum {
 
 			runningMaximum = list.Buckets[len(list.Buckets)-1].Max
-
 		}
 
 	}
-
-	fmt.Println("Max")
 
 	return runningMaximum
 
 }
 
 func (s *SplitList) PopMin() int {
+	if s.Length == 0 {
+		return -1
+	}
 
 	min := s.GetMin()
 
 	for _, list := range s.ListOfBucketLists {
 
 		if list.Buckets[0].Min == min {
-
 			list.Buckets[0].Indexes = list.Buckets[0].Indexes[1:]
 
 			if len(list.Buckets[0].Indexes) == 0 {
-
-				list.Buckets[0].Min = math.MaxInt64
-				list.Buckets[0].Max = math.MinInt64
+				if len(list.Buckets) > 1 {
+					list.Buckets = list.Buckets[1:]
+				} else {
+					list.Buckets[0].Min = math.MaxInt64
+					list.Buckets[0].Max = math.MinInt64
+				}
 
 			} else {
 
@@ -254,48 +265,43 @@ func (s *SplitList) PopMin() int {
 	}
 
 	return min
-
 }
 
 func (s *SplitList) PopMax() int {
+	if s.Length == 0 {
+		return -1
+	}
 
 	max := s.GetMax()
 
 	for _, list := range s.ListOfBucketLists {
-
 		lastBucketIndex := len(list.Buckets) - 1
 
-		if len(list.Buckets[lastBucketIndex].Indexes) == 0 {
+		if list.Buckets[lastBucketIndex].Max == max {
+			list.Buckets[lastBucketIndex].Indexes = list.Buckets[lastBucketIndex].Indexes[:len(list.Buckets[lastBucketIndex].Indexes) - 1]
 
-			continue
-
-		} else {
-
-			if list.Buckets[lastBucketIndex].Max == max {
-
-				list.Buckets[lastBucketIndex].Indexes = list.Buckets[lastBucketIndex].Indexes[0 : len(list.Buckets[lastBucketIndex].Indexes)-1]
-
-				if len(list.Buckets[lastBucketIndex].Indexes) == 0 {
-
-					list.Buckets[0].Min = math.MaxInt64
-					list.Buckets[0].Max = math.MinInt64
-
+			if len(list.Buckets[lastBucketIndex].Indexes) == 0 {
+				if len(list.Buckets) > 1 {
+					list.Buckets = list.Buckets[:lastBucketIndex]
 				} else {
-
-					list.Buckets[lastBucketIndex].Min = list.Buckets[lastBucketIndex].Indexes[0]
-					list.Buckets[lastBucketIndex].Max = list.Buckets[lastBucketIndex].Indexes[len(list.Buckets[lastBucketIndex].Indexes)-1]
-
+					list.Buckets[lastBucketIndex].Min = math.MaxInt64
+					list.Buckets[lastBucketIndex].Max = math.MinInt64
 				}
 
-				s.Length--
+			} else {
 
-				return max
+				list.Buckets[lastBucketIndex].Min = list.Buckets[lastBucketIndex].Indexes[0]
+				list.Buckets[lastBucketIndex].Max = list.Buckets[lastBucketIndex].Indexes[len(list.Buckets[lastBucketIndex].Indexes)-1]
 
 			}
+
+			s.Length--
+
+			return max
+
 		}
 
 	}
 
 	return max
-
 }
