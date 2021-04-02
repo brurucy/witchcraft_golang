@@ -2,45 +2,60 @@ package src
 
 import (
 	"fmt"
-	mauriceSkipList "github.com/MauriceGit/skiplist"
-	//chavezSkipList "github.com/mtchavez/skiplist"
-	//ryszardSkipList "github.com/ryszard/goskiplist/skiplist"
-	btree "github.com/google/btree"
-	seanSkipList "github.com/sean-public/fast-skiplist"
-	"math/rand"
 	"testing"
-	"time"
 )
 
-func TestBalance(t *testing.T) {
-
-	lob := &ListOfBuckets{Buckets: []*Bucket{{Indexes: []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
-		Min: 1,
-		Max: 10,
-	},
-		{Indexes: []int{11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
-			Min: 11,
-			Max: 20,
-		}},
-		Height: 5}
-
-	lob.Balance(1, 10)
-
-	fmt.Println(lob.Buckets, "at A")
+type intT struct {
+	val int
 }
+
+func (i *intT) Less(other Item) bool {
+	return i.val < other.(*intT).val
+}
+
+//func TestBalance(t *testing.T) {
+//
+//	lob := &ListOfBuckets{Buckets: []*Bucket{{Indexes: []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+//		Min: 1,
+//		Max: 10,
+//	},
+//		{Indexes: []int{11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
+//			Min: 11,
+//			Max: 20,
+//		}},
+//		Height: 5}
+//
+//	lob.Balance(1, 10)
+//
+//	fmt.Println(lob.Buckets, "at A")
+//}
 
 func TestAddFindTiny(t *testing.T) {
 	splitList := NewSplitList(1024)
 
 	for i := 0; i < 10; i++ {
-		splitList.Add(i)
+		splitList.Add(&intT{i})
 	}
 
-	if !splitList.Find(55) || splitList.Find(909) {
-		t.Fail()
+	for _, list := range splitList.ListOfBucketLists {
+		for _, bucket := range list.Buckets {
+			for _, index := range bucket.Indexes {
+				fmt.Print(index, "\t")
+			}
+			fmt.Println("---")
+		}
+		fmt.Println()
+	}
+
+	for i := 0; i < 10; i++ {
+		if !splitList.Find(&intT{i}) {
+			t.Log(i)
+			t.Fail()
+		}
 	}
 }
 
+/*
 func TestAddFindTinyInBetween(t *testing.T) {
 	splitList := NewSplitList(1024)
 	n := 1_000_000
@@ -763,7 +778,7 @@ func TestPopMin(t *testing.T) {
 func TestPopMax(t *testing.T) {
 	splitList := NewSplitList(1024)
 
-	n := 100_000
+	n := 10
 
 	for i := 0; i < n; i++ {
 		splitList.Add(i)
@@ -780,3 +795,5 @@ func TestPopMax(t *testing.T) {
 		}
 	}
 }
+
+*/
