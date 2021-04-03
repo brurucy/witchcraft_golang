@@ -2,8 +2,10 @@ package src
 
 import (
 	"fmt"
-	gbtree "github.com/google/btree"
+	"math/rand"
 	"testing"
+
+	gbtree "github.com/google/btree"
 )
 
 type intT struct {
@@ -34,7 +36,6 @@ func TestAddFindTiny(t *testing.T) {
 
 	for i := 0; i < 10; i++ {
 		if !splitList.Find(&intT{i}) {
-			//t.Log(i)
 			t.Fail()
 		}
 	}
@@ -43,8 +44,6 @@ func TestAddFindTiny(t *testing.T) {
 func TestGetMin(t *testing.T) {
 
 	splitList := NewSplitList(1024)
-
-	//skipList := New()
 
 	n := 1_000_000
 
@@ -64,8 +63,6 @@ func TestGetMin(t *testing.T) {
 func TestPopMin(t *testing.T) {
 
 	splitList := NewSplitList(1024)
-
-	//skipList := New()
 
 	n := 1_000_000
 
@@ -102,15 +99,12 @@ func TestGetMax(t *testing.T) {
 
 	splitList := NewSplitList(1024)
 
-	//skipList := New()
-
 	n := 1_000_000
 
 	for i := 0; i <= n; i++ {
 		ints := &intT{i}
 
 		splitList.Add(ints)
-		//fmt.Println(splitList.GetMax())
 
 		if splitList.Find(ints) == false || splitList.GetMax() != ints {
 			t.Fatal()
@@ -123,8 +117,6 @@ func TestGetMax(t *testing.T) {
 func TestPopMax(t *testing.T) {
 
 	splitList := NewSplitList(1024)
-
-	//skipList := New()
 
 	n := 1_000_000
 
@@ -179,5 +171,38 @@ func TestDelete(t *testing.T) {
 		fmt.Println(splitList.Length)
 		t.Fatal()
 	}
+
+}
+
+func TestTransitiveClosure(t *testing.T) {
+
+	splitList := NewSplitList(5)
+
+	n := 20
+
+	for i := 0; i <= n; i++ {
+
+		edge := &DirectedEdge{
+			From: i,
+			To:   i + rand.Intn(10),
+		}
+
+		splitList.Add(edge)
+
+	}
+
+	for _, list := range splitList.ListOfBucketLists {
+
+		fmt.Println("New height", list.Height)
+		for _, bucket := range list.Buckets {
+			for _, index := range bucket.Indexes {
+				fmt.Print(index, "\t")
+			}
+			fmt.Print("---\n")
+		}
+	}
+
+	fixpoint := false
+	deltaPath := splitList
 
 }
