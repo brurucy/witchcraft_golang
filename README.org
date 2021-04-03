@@ -1,12 +1,77 @@
-* Hello.
+* Split List
 
-At the moment it is around 4 times *faster*, in insertions, than the supposedly *fastest* skiplist library in Go, with lookups at around the same speed.
+In this Repo you can find an experimental data structure, the SplitList.
 
-You can test it with ~go test -bench='Add' -run=^a -benchtime=19999999x~
+In short, SplitList is a sort of *order-statistic* B-Tree/SkipList.
 
-Current tasks that need to be done:
+Think of the *many* times you've wished you could access the *something-th* element of a B-Tree faster than /O(k)/.
 
-** Adding Selection - https://cstheory.stackexchange.com/questions/20944/select-in-union-of-sorted-arrays-already-known/31968 - Greg N. Frederickson and Donald B. Johnson. 1980. Generalized selection and ranking (Preliminary Version) - Page 3, "Sorted Partitions"
-** Adding fractional cascading
-** Investigate https://arxiv.org/pdf/1904.04828.pdf
-** Making the code decent
+It supports the following operations:
+
+1. *Find* ~ O(log n)
+2. *Add* ~ O(B)
+3. *Delete* ~ O(log n)
+4. *Rank* ~ O(log n) // Not yet added, algorithm fully written down
+5. *Select* ~ O(log n) // Not yet added, still figuring out, but theoretically it is simple
+6. *Range-Query* ~ O(log n) // would returns results unordered though.
+
+It's *very* fast to add due to cache locality, however, the golang code is *very* far from being optimized, thus, even though it has faster lookups and insertions than all other skiplist implementations golang, gearing more towards B-Trees(benchmarks below), due to the fact that it can't be sequentially iterated, it is rather useless at the moment.
+
+Another important point to make is that it is *super* memory efficient.
+
+It could easily support in-order iteration with an aditional pointer cost per data.
+
+** sequential set **
+mauricesl:  set-seq	1,000,000 ops in 265ms, 3,779,718/sec, 264 ns/op, 236.5 MB, 248 bytes/op
+seansl:  set-seq	1,000,000 ops in 275ms, 3,632,487/sec, 275 ns/op, 58.6 MB, 61 bytes/op
+google:  set-seq	1,000,000 ops in 228ms, 4,376,714/sec, 228 ns/op, 30.9 MB, 32 bytes/op
+tidwall: set-seq	1,000,000 ops in 226ms, 4,426,954/sec, 225 ns/op, 36.6 MB, 38 bytes/op
+tidwall: set-seq-hint	1,000,000 ops in 137ms, 7,325,953/sec, 136 ns/op, 36.6 MB, 38 bytes/op
+tidwall: load-seq	1,000,000 ops in 59ms, 16,888,089/sec, 59 ns/op, 36.6 MB, 38 bytes/op
+go-arr:  append-seq	1,000,000 ops in 40ms, 25,277,640/sec, 39 ns/op
+splitlist: add		1,000,000 ops in 256ms, 3,913,821/sec, 255 ns/op, 31.1 MB, 32 bytes/op
+go-hashmap: set-seq	1,000,000 ops in 191ms, 5,244,965/sec, 190 ns/op, 38.3 MB, 40 bytes/op
+
+** sequential get **
+mauricesl:  find-seq	1,000,000 ops in 183ms, 5,453,290/sec, 183 ns/op
+seansl:  get-seq	1,000,000 ops in 140ms, 7,143,651/sec, 139 ns/op
+google:  get-seq	1,000,000 ops in 230ms, 4,352,220/sec, 229 ns/op
+tidwall: get-seq	1,000,000 ops in 183ms, 5,475,114/sec, 182 ns/op
+tidwall: get-seq-hint	1,000,000 ops in 161ms, 6,222,205/sec, 160 ns/op
+splitlist: find-seq	1,000,000 ops in 325ms, 3,072,697/sec, 325 ns/op
+go-hashmap: get-seq	1,000,000 ops in 75ms, 13,388,746/sec, 74 ns/op
+
+** random set **
+mauricesl: set-rand	1,000,000 ops in 1912ms, 523,111/sec, 1911 ns/op, 236.5 MB, 247 bytes/op
+seansl: set-rand	1,000,000 ops in 2229ms, 448,659/sec, 2228 ns/op, 58.6 MB, 61 bytes/op
+google: set-rand	1,000,000 ops in 1030ms, 970,559/sec, 1030 ns/op, 21.8 MB, 22 bytes/op
+tidwall: set-rand	1,000,000 ops in 922ms, 1,084,210/sec, 922 ns/op, 26.5 MB, 27 bytes/op
+tidwall: set-rand-hint	1,000,000 ops in 958ms, 1,043,717/sec, 958 ns/op, 26.5 MB, 27 bytes/op
+tidwall: set-rand-again	1,000,000 ops in 1006ms, 993,557/sec, 1006 ns/op
+tidwall: set-copy-rand	1,000,000 ops in 1014ms, 985,825/sec, 1014 ns/op
+tidwall: load-rand	1,000,000 ops in 947ms, 1,055,612/sec, 947 ns/op, 26.5 MB, 27 bytes/op
+splitlist: add-rand	1,000,000 ops in 1319ms, 758,425/sec, 1318 ns/op, 20.9 MB, 21 bytes/op
+go-hashmap: set-rand	1,000,000 ops in 83ms, 12,048,090/sec, 83 ns/op
+
+** random get **
+mauricesl: find-rand	1,000,000 ops in 1951ms, 512,435/sec, 1951 ns/op
+seansl: get-rand	1,000,000 ops in 2553ms, 391,676/sec, 2553 ns/op
+google: get-rand	1,000,000 ops in 1025ms, 975,702/sec, 1024 ns/op
+tidwall: get-rand	1,000,000 ops in 985ms, 1,015,340/sec, 984 ns/op
+tidwall: get-hint-rand	1,000,000 ops in 1046ms, 955,700/sec, 1046 ns/op
+splitlist: find-rand	1,000,000 ops in 1954ms, 511,644/sec, 1954 ns/op
+go-hashmap: get-rand	1,000,000 ops in 82ms, 12,226,186/sec, 81 ns/op
+
+** pop max **
+google: deletemax	1,000,000 ops in 73ms, 13,782,238/sec, 72 ns/op
+tidwall: popmax		1,000,000 ops in 106ms, 9,425,227/sec, 106 ns/op
+splitlist: pop		1,000,000 ops in 324ms, 3,082,761/sec, 324 ns/op
+
+1,000,000 ops in 1311ms, 762,737/sec, 1311 ns/op, 528.8 KB, 0 bytes/op
+1,000,000 ops in 1128ms, 886,192/sec, 1128 ns/op, 21.5 MB, 22 bytes/op
+1,000,000 ops in 910ms, 1,098,359/sec, 910 ns/op, 26.5 MB, 27 bytes/op
+
+** pop min **
+google: deletemax	1,000,000 ops in 149ms, 6,703,877/sec, 149 ns/op
+tidwall: popmax		1,000,000 ops in 161ms, 6,200,041/sec, 161 ns/op
+splitlist: pop		1,000,000 ops in 425ms, 2,350,265/sec, 425 ns/op

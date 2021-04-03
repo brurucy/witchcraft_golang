@@ -29,12 +29,11 @@ func (e Element) ExtractKey() float64 {
 func (e Element) String() string {
 	return fmt.Sprintf("%03d", e)
 }
-
 func main() {
 	less := func(a, b interface{}) bool {
 		return a.(*intT).val < b.(*intT).val
 	}
-	N := 10_000_000
+	N := 1_000_000
 	var temp intT
 	keys := make([]intT, N)
 	for i := 0; i < N; i++ {
@@ -106,7 +105,7 @@ func main() {
 	print("splitlist: add\t\t")
 	tsl := src.NewSplitList(1024)
 	lotsa.Ops(N, 1, func(i, _ int) {
-		tsl.Add(keys[i].val)
+		tsl.Add(&keys[i])
 	})
 
 	print("go-hashmap: set-seq\t")
@@ -143,10 +142,16 @@ func main() {
 		tr.GetHint(&keys[i], &hint)
 	})
 
-	print("splitlist: find seq\t")
+	print("splitlist: find-seq\t")
 	lotsa.Ops(N, 1, func(i, _ int) {
-		tsl.Find(keys[i].val)
+		tsl.Find(&keys[i])
 	})
+
+	/*
+		print("splitlist: find bottom-up-seq\t")
+		lotsa.Ops(N, 1, func(i, _ int) {
+			tsl.LookupReverse(&keys[i])
+		})*/
 
 	print("go-hashmap: get-seq\t")
 	lotsa.Ops(N, 1, func(i, _ int) {
@@ -207,7 +212,7 @@ func main() {
 	print("splitlist: add-rand\t")
 	tsl = src.NewSplitList(1024)
 	lotsa.Ops(N, 1, func(i, _ int) {
-		tsl.Add(keys[i].val)
+		tsl.Add(&keys[i])
 	})
 
 	print("go-hashmap: set-rand\t")
@@ -245,8 +250,15 @@ func main() {
 
 	print("splitlist: find-rand\t")
 	lotsa.Ops(N, 1, func(i, _ int) {
-		tsl.Find(keys[i].val)
+		tsl.Find(&keys[i])
 	})
+
+	/*
+		print("splitlist: find bottom-up-rand\t")
+		lotsa.Ops(N, 1, func(i, _ int) {
+			tsl.LookupReverse(&keys[i])
+		})
+	*/
 
 	print("go-hashmap: get-rand\t")
 	lotsa.Ops(N, 1, func(i, _ int) {
@@ -273,7 +285,7 @@ func main() {
 
 	println()
 	lotsa.Ops(N, 1, func(i, _ int) {
-		tsl.Add(keys[i].val)
+		tsl.Add(&keys[i])
 	})
 
 	lotsa.Ops(N, 1, func(i, _ int) {

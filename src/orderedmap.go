@@ -2,6 +2,7 @@ package src
 
 import (
 	"fmt"
+	gbtree "github.com/google/btree"
 	"math"
 	"math/rand"
 	"sort"
@@ -11,26 +12,16 @@ const (
 	capBucket = 2000
 )
 
-// Item represents a single object in the tree.
-type Item interface {
-	// Less tests whether the current item is less than the given argument.
-	//
-	// This must provide a strict weak ordering.
-	// If !a.Less(b) && !b.Less(a), we treat this to mean a == b (i.e. we can only
-	// hold one of either a or b in the tree).
-	Less(than Item) bool
-}
-
 type Bucket struct {
-	Indexes []Item
-	Min     Item
-	Max     Item
+	Indexes []gbtree.Item
+	Min     gbtree.Item
+	Max     gbtree.Item
 }
 
 // find returns the index where the given item should be inserted into this
 // list.  'found' is true if the item already exists in the list at the given
 // index.
-func (b Bucket) find(item Item) (index int, found bool) {
+func (b Bucket) find(item gbtree.Item) (index int, found bool) {
 	i := sort.Search(len(b.Indexes), func(i int) bool {
 		return item.Less(b.Indexes[i])
 	})
@@ -77,7 +68,7 @@ func NewSplitList(load int) *SplitList {
 func (l *ListOfBuckets) Balance(idx, load int) {
 	candidate := l.Buckets[idx]
 	halfLoad := load / 2
-	newIndexes := make([]Item, halfLoad, load)
+	newIndexes := make([]gbtree.Item, halfLoad, load)
 
 	for i := halfLoad - 1; i >= 0; i-- {
 		tmpIndexes := candidate.Indexes[len(candidate.Indexes)-1]
@@ -94,7 +85,7 @@ func (l *ListOfBuckets) Balance(idx, load int) {
 	candidate.Max = candidate.Indexes[len(candidate.Indexes)-1]
 
 	idxB := sort.Search(len(l.Buckets), func(i int) bool {
-		return l.Buckets[i].Max.Less(newBucket.Max)
+		return !l.Buckets[i].Max.Less(newBucket.Max)
 	})
 
 	l.Buckets = append(l.Buckets, &Bucket{})
@@ -106,9 +97,9 @@ func getRandomHeight() int {
 	return int(math.Abs(math.Log2(rand.Float64())))
 }
 
-func (s *SplitList) Add(item Item) {
+func (s *SplitList) Add(item gbtree.Item) {
 	if item == nil {
-		panic("nil item being added to BTree")
+		panic("nil item being added to Split List")
 	}
 
 	height := getRandomHeight()
@@ -123,7 +114,7 @@ func (s *SplitList) Add(item Item) {
 			Buckets: []*Bucket{{
 				Max:     nil,
 				Min:     nil,
-				Indexes: make([]Item, 0, capBucket),
+				Indexes: make([]gbtree.Item, 0, capBucket),
 			}},
 			Height: height + heightDiff,
 			ready:  false,
@@ -144,7 +135,7 @@ func (s *SplitList) Add(item Item) {
 
 	// bound index to insert/search
 	idxB := sort.Search(len(buckets), func(i int) bool {
-		return !item.Less(buckets[i].Max)
+		return !buckets[i].Max.Less(item) //!item.Less(buckets[i].Max)
 	})
 
 	if idxB == len(buckets) {
@@ -174,157 +165,218 @@ func (s *SplitList) Add(item Item) {
 	s.Length++
 }
 
-func (s *SplitList) Find(item Item) bool {
+func (s *SplitList) Find(item gbtree.Item) bool {
 	return s.Lookup(item, nil)
 }
 
-//func (s *SplitList) Delete(key int) bool {
-//	return s.Lookup(key, func(idxI, idxB int, buckets []*Bucket) {
-//		indexes := buckets[idxB].Indexes
-//
-//		if len(indexes) == 1 {
-//			buckets = buckets[:idxB+copy(buckets[idxB:], buckets[idxB+1:])]
-//		} else {
-//			indexes = indexes[:idxI+copy(indexes[idxI:], indexes[idxI+1:])]
-//			buckets[idxB].Max = indexes[len(indexes)-1]
-//			buckets[idxB].Min = indexes[0]
-//		}
-//
-//		s.Length--
-//	})
-//}
+func (s *SplitList) Delete(item gbtree.Item) bool {
+	return s.Lookup(item, func(idxI, idxB int, buckets *[]*Bucket) {
+		indexes := &((*buckets)[idxB].Indexes)
 
-func (s *SplitList) Lookup(item Item, f func(int, int, []*Bucket)) bool {
-	for _, list := range s.ListOfBucketLists {
-		listBuckets := list.Buckets
+		if len(*indexes) == 1 {
+			*buckets = (*buckets)[:idxB+copy((*buckets)[idxB:], (*buckets)[idxB+1:])]
+		} else {
+			*indexes = (*indexes)[:idxI+copy((*indexes)[idxI:], (*indexes)[idxI+1:])]
+			(*buckets)[idxB].Max = (*indexes)[len(*indexes)-1]
+			(*buckets)[idxB].Min = (*indexes)[0]
+		}
 
-		if len(listBuckets) == 0 {
+		s.Length--
+	})
+}
+
+func (s *SplitList) LookupReverse(item gbtree.Item) bool {
+
+	for i := s.CurrentHeight; i >= 0; i-- {
+		listBuckets := s.ListOfBucketLists[i].Buckets
+
+		if s.ListOfBucketLists[i].ready == false || len(listBuckets) == 0 {
 			continue
 		}
 
-		idxB := sort.Search(len(listBuckets), func(i int) bool {
-			return !listBuckets[i].Max.Less(item)
-		})
+		if item.Less(listBuckets[len(listBuckets)-1].Max) ||
 
-		if item.Less(listBuckets[len(listBuckets)-1].Max) {
+			(!item.Less(listBuckets[len(listBuckets)-1].Max) &&
+				!listBuckets[len(listBuckets)-1].Max.Less(item)) {
+
+			idxB := sort.Search(len(listBuckets), func(i int) bool {
+				return !listBuckets[i].Max.Less(item)
+			})
+
+			_, found := listBuckets[idxB].find(item)
+
+			if found {
+
+				return true
+			}
+		}
+	}
+
+	return false
+
+}
+
+func (s *SplitList) Lookup(item gbtree.Item, f func(int, int, *[]*Bucket)) bool {
+	for _, list := range s.ListOfBucketLists {
+		listBuckets := list.Buckets
+
+		if list.ready == false || len(listBuckets) == 0 {
+			continue
+		}
+
+		if item.Less(listBuckets[len(listBuckets)-1].Max) ||
+
+			(!item.Less(listBuckets[len(listBuckets)-1].Max) &&
+				!listBuckets[len(listBuckets)-1].Max.Less(item)) {
+
+			idxB := sort.Search(len(listBuckets), func(i int) bool {
+				return !listBuckets[i].Max.Less(item)
+			})
+
 			idxI, found := listBuckets[idxB].find(item)
 
 			if found {
 				if f != nil {
-					f(idxI, idxB, listBuckets)
+					f(idxI, idxB, &list.Buckets)
 				}
 
 				return true
 			}
 		}
-
-		//if key <= listBuckets[len(listBuckets)-1].Max &&  key >= listBuckets[0].Min && listBuckets[idxB].Min <= key {
-		//	idxI, found := listBuckets[idxB].find(item)
-		//
-		//	if found {
-		//		if f != nil {
-		//			f(idxI, idxB, listBuckets)
-		//		}
-		//
-		//		return true
-		//	}
-		//}
 	}
 
 	return false
 }
 
 // Theta log(n)
-func (s *SplitList) GetMin() int {
-	runningMinimum := math.MaxInt64
+func (s *SplitList) GetMin() gbtree.Item {
 
-	//for _, list := range s.ListOfBucketLists {
-	//	if list.Buckets[0].Min < runningMinimum {
-	//		runningMinimum = list.Buckets[0].Min
-	//	}
-	//}
+	runningMinimum := s.ListOfBucketLists[0].Buckets[0].Min
+
+	for _, list := range s.ListOfBucketLists {
+
+		if list.ready == false {
+
+			continue
+
+		}
+
+		if runningMinimum == nil {
+			runningMinimum = list.Buckets[0].Min
+			continue
+
+		}
+
+		if list.Buckets[0].Min.Less(runningMinimum) || (!list.Buckets[0].Min.Less(runningMinimum) && !runningMinimum.Less(list.Buckets[0].Min)) {
+
+			runningMinimum = list.Buckets[0].Min
+
+		}
+	}
 
 	return runningMinimum
 
 }
 
 // Theta log(n)
-func (s *SplitList) GetMax() int {
-	runningMaximum := math.MinInt64
+func (s *SplitList) GetMax() gbtree.Item {
+	runningMaximum := s.ListOfBucketLists[0].Buckets[len(s.ListOfBucketLists[0].Buckets)-1].Max
 
-	//for _, list := range s.ListOfBucketLists {
-	//	if list.Buckets[len(list.Buckets)-1].Max > runningMaximum {
-	//		runningMaximum = list.Buckets[len(list.Buckets)-1].Max
-	//	}
-	//}
+	for _, list := range s.ListOfBucketLists {
+
+		if list.ready == false {
+			continue
+
+		}
+
+		if runningMaximum == nil {
+			runningMaximum = list.Buckets[len(list.Buckets)-1].Max
+			continue
+
+		}
+
+		if runningMaximum.Less(list.Buckets[len(list.Buckets)-1].Max) || (!list.Buckets[len(list.Buckets)-1].Max.Less(runningMaximum) && !runningMaximum.Less(list.Buckets[len(list.Buckets)-1].Max)) {
+			runningMaximum = list.Buckets[len(list.Buckets)-1].Max
+		}
+	}
 
 	return runningMaximum
+
 }
 
-func (s *SplitList) PopMin() int {
+func (s *SplitList) PopMin() gbtree.Item {
 	if s.Length == 0 {
-		return -1
+		return nil
 	}
 
 	min := s.GetMin()
 
-	//for _, list := range s.ListOfBucketLists {
-	//	if list.Buckets[0].Min == min {
-	//		list.Buckets[0].Indexes = list.Buckets[0].Indexes[1:]
-	//
-	//		if len(list.Buckets[0].Indexes) == 0 {
-	//			if len(list.Buckets) > 1 {
-	//				list.Buckets = list.Buckets[1:]
-	//			} else {
-	//				list.Buckets[0].Min = math.MaxInt64
-	//				list.Buckets[0].Max = math.MinInt64
-	//			}
-	//		} else {
-	//			list.Buckets[0].Min = list.Buckets[0].Indexes[0]
-	//			list.Buckets[0].Max = list.Buckets[0].Indexes[len(list.Buckets[0].Indexes)-1]
-	//		}
-	//
-	//		s.Length--
-	//
-	//		return min
-	//	}
-	//}
+	for _, list := range s.ListOfBucketLists {
+		if list.ready == false {
+			continue
+		}
+		if !list.Buckets[0].Min.Less(min) && !min.Less(list.Buckets[0].Min) {
+			list.Buckets[0].Indexes = list.Buckets[0].Indexes[1:]
+
+			if len(list.Buckets[0].Indexes) == 0 {
+				if len(list.Buckets) > 1 {
+					list.Buckets = list.Buckets[1:]
+				} else {
+					list.Buckets[0].Min = nil
+					list.Buckets[0].Max = nil
+					list.ready = false
+				}
+			} else {
+				list.Buckets[0].Min = list.Buckets[0].Indexes[0]
+				list.Buckets[0].Max = list.Buckets[0].Indexes[len(list.Buckets[0].Indexes)-1]
+			}
+
+			s.Length--
+
+			return min
+		}
+	}
 
 	return min
 }
 
-func (s *SplitList) PopMax() int {
+func (s *SplitList) PopMax() gbtree.Item {
 	if s.Length == 0 {
-		return -1
+		return nil
 	}
 
 	max := s.GetMax()
-	//
-	//for _, list := range s.ListOfBucketLists {
-	//	lastBucketIndex := len(list.Buckets) - 1
-	//
-	//	if list.Buckets[lastBucketIndex].Max == max {
-	//		list.Buckets[lastBucketIndex].Indexes = list.Buckets[lastBucketIndex].Indexes[:len(list.Buckets[lastBucketIndex].Indexes)-1]
-	//
-	//		if len(list.Buckets[lastBucketIndex].Indexes) == 0 {
-	//			if len(list.Buckets) > 1 {
-	//				list.Buckets = list.Buckets[:lastBucketIndex]
-	//			} else {
-	//				list.Buckets[lastBucketIndex].Min = math.MaxInt64
-	//				list.Buckets[lastBucketIndex].Max = math.MinInt64
-	//			}
-	//		} else {
-	//			list.Buckets[lastBucketIndex].Min = list.Buckets[lastBucketIndex].Indexes[0]
-	//			list.Buckets[lastBucketIndex].Max = list.Buckets[lastBucketIndex].Indexes[len(list.Buckets[lastBucketIndex].Indexes)-1]
-	//		}
-	//
-	//		s.Length--
-	//
-	//		return max
-	//
-	//	}
-	//
-	//}
+
+	for _, list := range s.ListOfBucketLists {
+		lastBucketIndex := len(list.Buckets) - 1
+
+		if list.ready == false {
+			continue
+		}
+		if !list.Buckets[lastBucketIndex].Max.Less(max) && !max.Less(list.Buckets[lastBucketIndex].Max) {
+
+			list.Buckets[lastBucketIndex].Indexes = list.Buckets[lastBucketIndex].Indexes[:len(list.Buckets[lastBucketIndex].Indexes)-1]
+
+			if len(list.Buckets[lastBucketIndex].Indexes) == 0 {
+				if len(list.Buckets) > 1 {
+					list.Buckets = list.Buckets[:lastBucketIndex]
+				} else {
+					list.Buckets[lastBucketIndex].Min = nil
+					list.Buckets[lastBucketIndex].Max = nil
+					list.ready = false
+				}
+			} else {
+				list.Buckets[lastBucketIndex].Min = list.Buckets[lastBucketIndex].Indexes[0]
+				list.Buckets[lastBucketIndex].Max = list.Buckets[lastBucketIndex].Indexes[len(list.Buckets[lastBucketIndex].Indexes)-1]
+			}
+
+			s.Length--
+
+			return max
+
+		}
+
+	}
 
 	return max
 }
