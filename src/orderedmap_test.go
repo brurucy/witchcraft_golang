@@ -2,7 +2,6 @@ package src
 
 import (
 	"fmt"
-	"math/rand"
 	"testing"
 
 	gbtree "github.com/google/btree"
@@ -171,38 +170,5 @@ func TestDelete(t *testing.T) {
 		fmt.Println(splitList.Length)
 		t.Fatal()
 	}
-
-}
-
-func TestTransitiveClosure(t *testing.T) {
-
-	splitList := NewSplitList(5)
-
-	n := 20
-
-	for i := 0; i <= n; i++ {
-
-		edge := &DirectedEdge{
-			From: i,
-			To:   i + rand.Intn(10),
-		}
-
-		splitList.Add(edge)
-
-	}
-
-	for _, list := range splitList.ListOfBucketLists {
-
-		fmt.Println("New height", list.Height)
-		for _, bucket := range list.Buckets {
-			for _, index := range bucket.Indexes {
-				fmt.Print(index, "\t")
-			}
-			fmt.Print("---\n")
-		}
-	}
-
-	fixpoint := false
-	deltaPath := splitList
 
 }

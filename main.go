@@ -10,7 +10,7 @@ import (
 	"math/rand"
 	"os"
 	"sort"
-	"witchcraft/src"
+	"splitlist/src"
 )
 
 type intT struct {

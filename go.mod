@@ -1,4 +1,4 @@
-module jagalist
+module splitlist
 
 go 1.15
 
