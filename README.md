@@ -1,3 +1,5 @@
+[![Codebashing](https://github.com/brurucy/splitlist/actions/workflows/codebashing.yml/badge.svg)](https://github.com/brurucy/splitlist/actions/workflows/codebashing.yml)
+[![made-with-Go](https://img.shields.io/badge/Made%20with-Go-1f425f.svg)](http://golang.org)
 ![](imgs/splitlist.svg)
 
 In this Repo you can find an experimental data structure, the SplitList.
