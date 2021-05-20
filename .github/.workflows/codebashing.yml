@@ -1,0 +1,22 @@
+name: Cicd
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+      - name: Set up go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '^1.15.10'
+      - name: Lint
+        uses: golangci/golangci-lint-action@v2
+      - name: Run tests
+        run: "cd src && go test -run='' -v"
