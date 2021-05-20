@@ -1,10 +1,19 @@
-![](imgs/split_list_logo.jpg)
+![](imgs/splitlist.svg)
 
 In this Repo you can find an experimental data structure, the SplitList.
 
-In short, SplitList is a sort of **order-statistic** B-Tree/SkipList.
+It is a sort of different take on a B-Tree, that is a generalization of a Binary tree.
 
-Think of the **many** times you've wished you could access the **something-th** element of a B-Tree faster than /O(n)/.
+All you have to know about the B-Tree is that it has a parameter **B**, ~~surprisingly~~, that defines what is the **maximum**
+amount of data that a tree **node** can have, in contrast, the Binary tree has only one data point per node.
+
+The difference between the B-Tree and the Split List is in the way that we arrange the data.
+
+Every time an element is added to the B-Tree, it recursively travels down the tree until it finds a node where it should
+fit, on the SplitList each node goes to a **random** bucket, roughly the same as the node, inside an array, in such a way that the biggest array of
+buckets will always have something close to half of all data, and all subsequent ones will have half of the previous.
+
+What matters is that it is pretty fast and memory efficient :) 
 
 It supports the following operations:
 
@@ -13,13 +22,9 @@ It supports the following operations:
 3. **Delete** ~ O(log n)
 4. **Rank** ~ O(log n) // Added
 5. **Select** ~ O(log n) // Not yet added, still figuring out, but theoretically it is simple
-6. **Range-Query** ~ O(log n) // would returns results unordered though.
+6. **Range-Query** ~ O(log n) // would return results unordered though.
 
-It's **very** fast to add due to cache locality, however, the golang code is **very** far from being optimized, thus, even though it has faster lookups and insertions than all other skiplist implementations golang, gearing more towards B-Trees(benchmarks below), due to the fact that it can't be sequentially iterated, it is rather useless at the moment.
-
-Another important point to make is that it is **super** memory efficient.
-
-It could easily support in-order iteration with an aditional pointer cost per data.
+In-order iteration could easily be added at the cost of one pointer per data point.
 
 * Benchmarks
 
