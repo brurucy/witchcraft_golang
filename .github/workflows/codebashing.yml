@@ -1,4 +1,4 @@
-name: Cicd
+name: Codebashing
 
 on:
   push:
