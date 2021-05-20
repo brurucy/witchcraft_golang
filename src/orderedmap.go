@@ -165,6 +165,11 @@ func (s *SplitList) Add(item gbtree.Item) {
 	s.Length++
 }
 
+func (s *SplitList) Select(kth int) gbtree.Item {
+	// TODO: include part here
+	return nil
+}
+
 func (s *SplitList) Find(item gbtree.Item) bool {
 	return s.Lookup(item, nil)
 }

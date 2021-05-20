@@ -1,4 +1,4 @@
-module witchcraft
+module jagalist
 
 go 1.15
 

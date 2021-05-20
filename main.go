@@ -29,6 +29,16 @@ func (e Element) ExtractKey() float64 {
 func (e Element) String() string {
 	return fmt.Sprintf("%03d", e)
 }
+
+func test() {
+	tsl := src.NewSplitList(1024)
+	for i := 0; i < 20; i++ {
+		tsl.Add(&intT{i})
+	}
+
+	fmt.Println(tsl)
+}
+
 func main() {
 	less := func(a, b interface{}) bool {
 		return a.(*intT).val < b.(*intT).val
