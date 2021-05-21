@@ -213,11 +213,11 @@ func TestRank(t *testing.T) {
 
 }
 
-func TestSelect(t *testing.T) {
+func TestSelect1(t *testing.T) {
 
 	splitList := NewSplitList(1024)
 
-	n := 1_000
+	n := 1_0000
 
 	for i := n; i >= 0; i-- {
 
@@ -231,7 +231,7 @@ func TestSelect(t *testing.T) {
 
 		ints := &intT{i}
 
-		kth := splitList.Select(i)
+		kth := splitList.Select1(i)
 
 		if kth.Less(ints) || ints.Less(kth) {
 

@@ -32,7 +32,7 @@ func (e Element) String() string {
 
 func test() {
 	tsl := src.NewSplitList(1024)
-	for i := 10; i < 200; i++ {
+	for i := 3; i < 200; i++ {
 		tsl.Add(&intT{i})
 	}
 
@@ -40,9 +40,6 @@ func test() {
 }
 
 func main() {
-
-	test()
-
 	less := func(a, b interface{}) bool {
 		return a.(*intT).val < b.(*intT).val
 	}
@@ -132,6 +129,13 @@ func main() {
 	print("splitlist: seq-rank\t\t")
 	lotsa.Ops(N, 1, func(i, _ int) {
 		tsl.Rank(&keys[i])
+	})
+
+	println()
+	println("** sequential select **")
+	print("splitlist: seq-select\t\t")
+	lotsa.Ops(N, 1, func(i, _ int) {
+		tsl.Select(i)
 	})
 
 	println()
@@ -236,9 +240,16 @@ func main() {
 
 	println()
 	println("** random rank **")
-	print("splitlist: rank-rand\t\t")
+	print("splitlist: rand-rank\t\t")
 	lotsa.Ops(N, 1, func(i, _ int) {
 		tsl.Rank(&keys[i])
+	})
+
+	println()
+	println("** random select **")
+	print("splitlist: rand-select\t\t")
+	lotsa.Ops(N, 1, func(i, _ int) {
+		tsl.Select(i)
 	})
 
 	println()
@@ -331,5 +342,4 @@ func main() {
 	if temp.Less(&temp) {
 		panic("oh no")
 	}
-
 }
