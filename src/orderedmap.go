@@ -18,6 +18,18 @@ type Bucket struct {
 	Max     gbtree.Item
 }
 
+func (f Bucket) Len() int {
+	return len(f.Indexes)
+}
+
+func (f Bucket) Less(i, j int) bool {
+	return f.Indexes[i].Less(f.Indexes[j])
+}
+
+func (f Bucket) Swap(i, j int) {
+	f.Indexes[i], f.Indexes[j] = f.Indexes[j], f.Indexes[i]
+}
+
 // find returns the index where the given item should be inserted into this
 // list.  'found' is true if the item already exists in the list at the given
 // index.
@@ -48,11 +60,12 @@ func (l ListOfBuckets) String() string {
 }
 
 type SplitList struct {
-	ListOfBucketLists []*ListOfBuckets
-	CurrentHeight     int
-	Length            int
-	Load              int
-	CachedFlatItems   flatIndexes
+	ListOfBucketLists     []*ListOfBuckets
+	CurrentHeight         int
+	Length                int
+	Load                  int
+	CachedFlatItems       *Bucket
+	cacheReadyToBeUpdated bool
 }
 
 func NewSplitList(load int) *SplitList {
@@ -164,134 +177,58 @@ func (s *SplitList) Add(item gbtree.Item) {
 	}
 
 	s.Length++
-}
 
-type flatIndexes []gbtree.Item
-
-func (f flatIndexes) Len() int {
-	return len(f)
-}
-
-func (f flatIndexes) Less(i, j int) bool {
-	return f[i].Less(f[j])
-}
-
-func (f flatIndexes) Swap(i, j int) {
-	f[i], f[j] = f[j], f[i]
+	s.cacheReadyToBeUpdated = true
 }
 
 // Select finds the kth smallest element across all splitlist levels
 func (s *SplitList) Select(kth int) gbtree.Item {
-	if s.CachedFlatItems == nil || len(s.CachedFlatItems) != s.Length {
-		s.CachedFlatItems = make([]gbtree.Item, s.Length)
+	if s.CachedFlatItems == nil || s.cacheReadyToBeUpdated {
+		s.CachedFlatItems = &Bucket{
+			Indexes: make([]gbtree.Item, s.Length),
+			Min:     nil,
+			Max:     nil,
+		}
 
 		offset := 0
 		for _, l := range s.ListOfBucketLists {
 			for _, b := range l.Buckets {
-				copy(s.CachedFlatItems[offset:], b.Indexes)
+				copy(s.CachedFlatItems.Indexes[offset:], b.Indexes)
 				offset += len(b.Indexes)
 			}
 		}
 
 		sort.Sort(s.CachedFlatItems)
+		s.cacheReadyToBeUpdated = false
 	}
 
-	return s.CachedFlatItems[kth]
-}
-
-func (s *SplitList) Select1(kth int) gbtree.Item {
-	flat := make([]gbtree.Item, s.Length)
-
-	offset := 0
-	for _, l := range s.ListOfBucketLists {
-		for _, b := range l.Buckets {
-			copy(flat[offset:], b.Indexes)
-			offset += len(b.Indexes)
-		}
-	}
-
-	flatIdx := flatIndexes(flat)
-
-	first, last := 0, flatIdx.Len()-1
-	for {
-		flatIdx.Swap(first, rand.Intn(last-first+1)+first)
-		left := first + 1
-		right := last
-		for left <= right {
-			for left <= last && flatIdx.Less(left, first) {
-				left++
-			}
-			for right >= first && flatIdx.Less(first, right) {
-				right--
-			}
-			if left <= right {
-				flatIdx.Swap(left, right)
-				left++
-				right--
-			}
-		}
-		flatIdx.Swap(first, right)
-
-		if kth == right {
-			return flatIdx[right]
-		} else if kth < right {
-			last = right - 1
-		} else {
-			first = right + 1
-		}
-	}
+	return s.CachedFlatItems.Indexes[kth]
 }
 
 // Rank outputs the rank in the sorted union of all lists, that the given value would occupy
 func (s *SplitList) Rank(item gbtree.Item) (kth int) {
-
-	for _, list := range s.ListOfBucketLists {
-
-		if !list.ready || len(list.Buckets) == 0 {
-			continue
+	if s.CachedFlatItems == nil || s.cacheReadyToBeUpdated {
+		s.CachedFlatItems = &Bucket{
+			Indexes: make([]gbtree.Item, s.Length),
+			Min:     nil,
+			Max:     nil,
 		}
 
-		bucketsWithMaximumLessThanItem := sort.Search(len(list.Buckets), func(i int) bool {
-			return !list.Buckets[i].Max.Less(item)
-		})
-
-		switch bucketsWithMaximumLessThanItem {
-		// If it isn't smaller than anything, continue iterating
-		case 0:
-			{
-
-				valuesWithMaximumLessThanItemInTheFirstBucket, _ := list.Buckets[0].find(item)
-
-				kth += valuesWithMaximumLessThanItemInTheFirstBucket
-
-			}
-		// Else...
-		default:
-			{
-				// Count the lengths of all buckets UP TO the one that supposedly could contain the item that we want
-				for i := 0; i < bucketsWithMaximumLessThanItem; i++ {
-					kth += len(list.Buckets[i].Indexes)
-				}
-
-				if len(list.Buckets) == bucketsWithMaximumLessThanItem {
-
-					continue
-
-				} else {
-
-					// Now, count the values in the bucket that we want that are LESS than the item
-					valuesWithMaximumLessThanItemInTheLastBucket, _ := list.Buckets[bucketsWithMaximumLessThanItem].find(item)
-
-					kth += valuesWithMaximumLessThanItemInTheLastBucket
-
-				}
-
+		offset := 0
+		for _, l := range s.ListOfBucketLists {
+			for _, b := range l.Buckets {
+				copy(s.CachedFlatItems.Indexes[offset:], b.Indexes)
+				offset += len(b.Indexes)
 			}
 		}
 
+		sort.Sort(s.CachedFlatItems)
+		s.cacheReadyToBeUpdated = false
 	}
 
-	return kth
+	kth, _ = s.CachedFlatItems.find(item)
+
+	return
 }
 
 func (s *SplitList) Find(item gbtree.Item) bool {
@@ -311,6 +248,8 @@ func (s *SplitList) Delete(item gbtree.Item) bool {
 		}
 
 		s.Length--
+
+		s.cacheReadyToBeUpdated = true
 	})
 }
 
