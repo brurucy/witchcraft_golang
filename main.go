@@ -122,9 +122,16 @@ func main() {
 	})
 
 	print("go-hashmap: set-seq\t")
-	hm := make(map[int]intT, 0)
+	hm := make(map[int]intT)
 	lotsa.Ops(N, 1, func(i, _ int) {
 		hm[i] = keys[i]
+	})
+
+	println()
+	println("** sequential rank **")
+	print("splitlist: seq-rank\t\t")
+	lotsa.Ops(N, 1, func(i, _ int) {
+		tsl.Rank(&keys[i])
 	})
 
 	println()
@@ -228,6 +235,13 @@ func main() {
 	})
 
 	println()
+	println("** random rank **")
+	print("splitlist: rank-rand\t\t")
+	lotsa.Ops(N, 1, func(i, _ int) {
+		tsl.Rank(&keys[i])
+	})
+
+	println()
 	println("** random get **")
 
 	print("mauricesl: find-rand\t")
@@ -314,17 +328,8 @@ func main() {
 		tsl.PopMin()
 	})
 
-	println()
-	println("** rank **")
+	if temp.Less(&temp) {
+		panic("oh no")
+	}
 
-	print("splitlist: rank\t\t")
-	lotsa.Ops(N, 1, func(i, _ int) {
-		tsl.Rank(&keys[i])
-	})
-
-	println()
-	println("** select **")
-	lotsa.Ops(N, 1, func(i, _ int) {
-		tsl.Select(i)
-	})
 }
