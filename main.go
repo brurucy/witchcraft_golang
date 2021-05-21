@@ -32,14 +32,18 @@ func (e Element) String() string {
 
 func test() {
 	tsl := src.NewSplitList(1024)
-	for i := 0; i < 20; i++ {
+	for i := 10; i < 200; i++ {
 		tsl.Add(&intT{i})
 	}
 
-	fmt.Println(tsl)
+	fmt.Println(tsl.Select(30))
 }
 
 func main() {
+
+	test()
+
+	return
 	less := func(a, b interface{}) bool {
 		return a.(*intT).val < b.(*intT).val
 	}
