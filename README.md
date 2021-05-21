@@ -2,7 +2,7 @@
 [![made-with-Go](https://img.shields.io/badge/Made%20with-Go-1f425f.svg)](http://golang.org)
 
 <p align="center">
-  <img width="500" src="imgs/splitlist.svg">
+  <img width="400" src="imgs/splitlist.svg">
 </p>
 
 In this Repo you can find an experimental data structure, the SplitList.
