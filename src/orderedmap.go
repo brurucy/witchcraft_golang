@@ -170,6 +170,57 @@ func (s *SplitList) Select(kth int) gbtree.Item {
 	return nil
 }
 
+// Rank outputs the rank in the sorted union of all lists, that the given value would occupy
+func (s *SplitList) Rank(item gbtree.Item) (kth int) {
+
+	for _, list := range s.ListOfBucketLists {
+
+		if list.ready == false || len(list.Buckets) == 0 {
+			continue
+		}
+
+		bucketsWithMaximumLessThanItem := sort.Search(len(list.Buckets), func(i int) bool {
+			return !list.Buckets[i].Max.Less(item)
+		})
+
+		switch bucketsWithMaximumLessThanItem {
+		// If it isn't smaller than anything, continue iterating
+		case 0: {
+
+			valuesWithMaximumLessThanItemInTheFirstBucket, _ := list.Buckets[0].find(item)
+
+			kth += valuesWithMaximumLessThanItemInTheFirstBucket
+
+		}
+		// Else...
+		default: {
+			// Count the lengths of all buckets UP TO the one that supposedly could contain the item that we want
+			for i := 0; i < bucketsWithMaximumLessThanItem; i++ {
+				kth += len(list.Buckets[i].Indexes)
+			}
+
+			if len(list.Buckets) == bucketsWithMaximumLessThanItem {
+
+				continue
+
+			} else {
+
+				// Now, count the values in the bucket that we want that are LESS than the item
+				valuesWithMaximumLessThanItemInTheLastBucket, _ := list.Buckets[bucketsWithMaximumLessThanItem].find(item)
+
+				kth += valuesWithMaximumLessThanItemInTheLastBucket
+
+			}
+
+		}
+		}
+
+	}
+
+	return kth
+
+}
+
 func (s *SplitList) Find(item gbtree.Item) bool {
 	return s.Lookup(item, nil)
 }
@@ -253,7 +304,6 @@ func (s *SplitList) Lookup(item gbtree.Item, f func(int, int, *[]*Bucket)) bool 
 	return false
 }
 
-// Theta log(n)
 func (s *SplitList) GetMin() gbtree.Item {
 
 	runningMinimum := s.ListOfBucketLists[0].Buckets[0].Min
@@ -283,7 +333,6 @@ func (s *SplitList) GetMin() gbtree.Item {
 
 }
 
-// Theta log(n)
 func (s *SplitList) GetMax() gbtree.Item {
 	runningMaximum := s.ListOfBucketLists[0].Buckets[len(s.ListOfBucketLists[0].Buckets)-1].Max
 

@@ -172,3 +172,43 @@ func TestDelete(t *testing.T) {
 	}
 
 }
+
+func TestRank(t *testing.T) {
+
+	splitList := NewSplitList(1024)
+
+	n := 1_000_000
+
+	for i := n; i >= 0; i-- {
+
+		ints := &intT{i}
+
+		splitList.Add(ints)
+
+	}
+
+	var rank int
+
+	for _, list := range splitList.ListOfBucketLists {
+
+		for _, bucket := range list.Buckets {
+
+			for _, index := range bucket.Indexes {
+
+				rank = splitList.Rank(index)
+
+				rankMinusOne := intT{rank}
+
+				if rankMinusOne.Less(index) || index.Less(&rankMinusOne) {
+
+					t.Fatalf("failed at: %v %v", index, rank)
+
+				}
+
+			}
+
+		}
+
+	}
+
+}
