@@ -179,6 +179,7 @@ func (f flatIndexes) Swap(i, j int) {
 	f[i], f[j] = f[j], f[i]
 }
 
+// Select finds the kth smallest element across all splitlist levels
 func (s *SplitList) Select(kth int) gbtree.Item {
 	flat := make([]gbtree.Item, 0)
 
