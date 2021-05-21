@@ -30,7 +30,19 @@ func (e Element) String() string {
 	return fmt.Sprintf("%03d", e)
 }
 
+func test() {
+	tsl := src.NewSplitList(1024)
+	for i := 10; i < 200; i++ {
+		tsl.Add(&intT{i})
+	}
+
+	fmt.Println(tsl.Select(30))
+}
+
 func main() {
+
+	test()
+
 	less := func(a, b interface{}) bool {
 		return a.(*intT).val < b.(*intT).val
 	}
@@ -148,12 +160,6 @@ func main() {
 		tsl.Find(&keys[i])
 	})
 
-	/*
-		print("splitlist: find bottom-up-seq\t")
-		lotsa.Ops(N, 1, func(i, _ int) {
-			tsl.LookupReverse(&keys[i])
-		})*/
-
 	print("go-hashmap: get-seq\t")
 	lotsa.Ops(N, 1, func(i, _ int) {
 		temp = hm[i]
@@ -254,13 +260,6 @@ func main() {
 		tsl.Find(&keys[i])
 	})
 
-	/*
-		print("splitlist: find bottom-up-rand\t")
-		lotsa.Ops(N, 1, func(i, _ int) {
-			tsl.LookupReverse(&keys[i])
-		})
-	*/
-
 	print("go-hashmap: get-rand\t")
 	lotsa.Ops(N, 1, func(i, _ int) {
 		temp = hm[keys[i].val]
@@ -318,6 +317,14 @@ func main() {
 	println()
 	println("** rank **")
 
+	print("splitlist: rank\t\t")
+	lotsa.Ops(N, 1, func(i, _ int) {
+		tsl.Rank(&keys[i])
+	})
+
 	println()
 	println("** select **")
+	lotsa.Ops(N, 1, func(i, _ int) {
+		tsl.Select(i)
+	})
 }

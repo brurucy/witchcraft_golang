@@ -165,9 +165,59 @@ func (s *SplitList) Add(item gbtree.Item) {
 	s.Length++
 }
 
+type flatIndexes []gbtree.Item
+
+func (f flatIndexes) Len() int {
+	return len(f)
+}
+
+func (f flatIndexes) Less(i, j int) bool {
+	return f[i].Less(f[j])
+}
+
+func (f flatIndexes) Swap(i, j int) {
+	f[i], f[j] = f[j], f[i]
+}
+
 func (s *SplitList) Select(kth int) gbtree.Item {
-	// TODO: include part here
-	return nil
+	flat := make([]gbtree.Item, 0)
+
+	for _, l := range s.ListOfBucketLists {
+		for _, b := range l.Buckets {
+			flat = append(flat, b.Indexes...)
+		}
+	}
+
+	flatIdx := flatIndexes(flat)
+
+	first, last := 0, flatIdx.Len()-1
+	for {
+		flatIdx.Swap(first, rand.Intn(last-first+1)+first)
+		left := first + 1
+		right := last
+		for left <= right {
+			for left <= last && flatIdx.Less(left, first) {
+				left++
+			}
+			for right >= first && flatIdx.Less(first, right) {
+				right--
+			}
+			if left <= right {
+				flatIdx.Swap(left, right)
+				left++
+				right--
+			}
+		}
+		flatIdx.Swap(first, right)
+
+		if kth == right {
+			return flatIdx[right]
+		} else if kth < right {
+			last = right - 1
+		} else {
+			first = right + 1
+		}
+	}
 }
 
 // Rank outputs the rank in the sorted union of all lists, that the given value would occupy
@@ -251,7 +301,6 @@ func (s *SplitList) LookupReverse(item gbtree.Item) bool {
 		}
 
 		if item.Less(listBuckets[len(listBuckets)-1].Max) ||
-
 			(!item.Less(listBuckets[len(listBuckets)-1].Max) &&
 				!listBuckets[len(listBuckets)-1].Max.Less(item)) {
 
@@ -281,7 +330,6 @@ func (s *SplitList) Lookup(item gbtree.Item, f func(int, int, *[]*Bucket)) bool 
 		}
 
 		if item.Less(listBuckets[len(listBuckets)-1].Max) ||
-
 			(!item.Less(listBuckets[len(listBuckets)-1].Max) &&
 				!listBuckets[len(listBuckets)-1].Max.Less(item)) {
 
