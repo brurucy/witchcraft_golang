@@ -122,7 +122,7 @@ func main() {
 	})
 
 	print("go-hashmap: set-seq\t")
-	hm := make(map[int]intT, 0)
+	hm := make(map[int]intT)
 	lotsa.Ops(N, 1, func(i, _ int) {
 		hm[i] = keys[i]
 	})
@@ -327,5 +327,9 @@ func main() {
 	lotsa.Ops(N, 1, func(i, _ int) {
 		tsl.PopMin()
 	})
+
+	if temp.Less(&temp) {
+		panic("oh no")
+	}
 
 }

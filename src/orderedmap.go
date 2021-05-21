@@ -225,7 +225,7 @@ func (s *SplitList) Rank(item gbtree.Item) (kth int) {
 
 	for _, list := range s.ListOfBucketLists {
 
-		if list.ready == false || len(list.Buckets) == 0 {
+		if !list.ready || len(list.Buckets) == 0 {
 			continue
 		}
 
@@ -296,7 +296,7 @@ func (s *SplitList) LookupReverse(item gbtree.Item) bool {
 	for i := s.CurrentHeight; i >= 0; i-- {
 		listBuckets := s.ListOfBucketLists[i].Buckets
 
-		if s.ListOfBucketLists[i].ready == false || len(listBuckets) == 0 {
+		if !s.ListOfBucketLists[i].ready || len(listBuckets) == 0 {
 			continue
 		}
 
@@ -325,7 +325,7 @@ func (s *SplitList) Lookup(item gbtree.Item, f func(int, int, *[]*Bucket)) bool 
 	for _, list := range s.ListOfBucketLists {
 		listBuckets := list.Buckets
 
-		if list.ready == false || len(listBuckets) == 0 {
+		if !list.ready || len(listBuckets) == 0 {
 			continue
 		}
 
@@ -358,7 +358,7 @@ func (s *SplitList) GetMin() gbtree.Item {
 
 	for _, list := range s.ListOfBucketLists {
 
-		if list.ready == false {
+		if !list.ready {
 
 			continue
 
@@ -386,7 +386,7 @@ func (s *SplitList) GetMax() gbtree.Item {
 
 	for _, list := range s.ListOfBucketLists {
 
-		if list.ready == false {
+		if !list.ready {
 			continue
 
 		}
@@ -414,7 +414,7 @@ func (s *SplitList) PopMin() gbtree.Item {
 	min := s.GetMin()
 
 	for _, list := range s.ListOfBucketLists {
-		if list.ready == false {
+		if !list.ready {
 			continue
 		}
 		if !list.Buckets[0].Min.Less(min) && !min.Less(list.Buckets[0].Min) {
@@ -452,7 +452,7 @@ func (s *SplitList) PopMax() gbtree.Item {
 	for _, list := range s.ListOfBucketLists {
 		lastBucketIndex := len(list.Buckets) - 1
 
-		if list.ready == false {
+		if !list.ready {
 			continue
 		}
 		if !list.Buckets[lastBucketIndex].Max.Less(max) && !max.Less(list.Buckets[lastBucketIndex].Max) {
