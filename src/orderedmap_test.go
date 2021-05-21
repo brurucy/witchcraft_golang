@@ -212,3 +212,33 @@ func TestRank(t *testing.T) {
 	}
 
 }
+
+func TestSelect(t *testing.T) {
+
+	splitList := NewSplitList(1024)
+
+	n := 1_000
+
+	for i := n; i >= 0; i-- {
+
+		ints := &intT{i}
+
+		splitList.Add(ints)
+
+	}
+
+	for i := n; i >= 0; i-- {
+
+		ints := &intT{i}
+
+		kth := splitList.Select(i)
+
+		if kth.Less(ints) || ints.Less(kth) {
+
+			t.Fatalf("%v %v", ints, kth)
+
+		}
+
+	}
+
+}

@@ -128,6 +128,13 @@ func main() {
 	})
 
 	println()
+	println("** sequential rank **")
+	print("splitlist: seq-rank\t\t")
+	lotsa.Ops(N, 1, func(i, _ int) {
+		tsl.Rank(&keys[i])
+	})
+
+	println()
 	println("** sequential get **")
 
 	print("mauricesl:  find-seq\t")
@@ -228,6 +235,13 @@ func main() {
 	})
 
 	println()
+	println("** random rank **")
+	print("splitlist: rank-rand\t\t")
+	lotsa.Ops(N, 1, func(i, _ int) {
+		tsl.Rank(&keys[i])
+	})
+
+	println()
 	println("** random get **")
 
 	print("mauricesl: find-rand\t")
@@ -314,17 +328,4 @@ func main() {
 		tsl.PopMin()
 	})
 
-	println()
-	println("** rank **")
-
-	print("splitlist: rank\t\t")
-	lotsa.Ops(N, 1, func(i, _ int) {
-		tsl.Rank(&keys[i])
-	})
-
-	println()
-	println("** select **")
-	lotsa.Ops(N, 1, func(i, _ int) {
-		tsl.Select(i)
-	})
 }
